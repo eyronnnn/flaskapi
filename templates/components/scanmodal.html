@@ -1,52 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fish Scanning Steps</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Styles for the dropdown and popup center alignment */
+        .dropdown-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            display: none;
+            z-index: 100;
+        }
+        .dropdown-center {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            width: 400px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        /* Blur effect for background */
+        .blurred {
+            filter: blur(5px);
+        }
+        
+        /* Ensure the popup is always on top */
+        #popupModal {
+            z-index: 10000; /* Higher than the modal */
+        }
+    </style>
+</head>
+<body>
+
+<!-- Main Modal Content -->
 <input type="checkbox" id="my_modal_7" class="modal-toggle" />
 <div class="modal" role="dialog">
-  <div class="modal-box" style="width: 1200px; height: 800px;"> <!-- Increased width and height -->
-    <!-- Larger Heading -->
-    <h3 class="text-4xl font-bold text-center mt-[-20] mb-6">Scanning Steps</h3>
+    <div class="modal-box" style="width: 1200px; height: 800px;">
+        <h3 class="text-4xl font-bold text-center mt-[-20] mb-6">Scanning Steps</h3>
 
-    <!-- Breadcrumbs centered -->
-    <div class="breadcrumbs text-md ml-12 text-center mb-6 font-bold">
-      <ul class="inline-flex space-x-2">
-        <li><a href="#" onclick="showStep('scan')" class="text-blue-500">Scan</a></li>
-        <li><a href="#" onclick="showStep('input-forms')" class="text-blue-500">Input forms</a></li>
-        <li><a href="#" onclick="showStep('validation')" class="text-blue-500">Validation</a></li>
-        <li><a href="#" onclick="showStep('result')" class="text-blue-500">Result</a></li>
-      </ul>
-    </div>
+        <div class="breadcrumbs text-md ml-12 text-center mb-6 font-bold">
+            <ul class="inline-flex space-x-2">
+                <li><a href="#" onclick="showStep('scan')" class="text-blue-500">Scan</a></li>
+                <li><a href="#" onclick="showStep('input-forms')" class="text-blue-500">Input forms</a></li>
+                <li><a href="#" onclick="showStep('validation')" class="text-blue-500">Validation</a></li>
+                <li><a href="#" onclick="showStep('result')" class="text-blue-500">Result</a></li>
+            </ul>
+        </div>
 
-    <!-- Sections hidden by default except for the first -->
-    <div id="scan" class="step-content">
-      <!-- Add the image in the scan section -->
-    <img src="{{ url_for( filename='.templates/components/scanpicture.png') }}" alt="Scan Image" class="w-full h-auto">
+        <div id="scan" class="step-content">
+            <div class="text-center mb-4">
+                <img src="https://i.postimg.cc/PPnjwmwf/scanpicture.png" alt="Scan Picture" class="w-full h-auto max-w-[900px]" />
+            </div>
+            <p class="text-md text-center mb-4 text-gray-900 mt-10">Now that you've finished scanning the fish, let's start getting your real-time inputs.</p>
+            <div class="text-center mt-10">
+                <button class="bg-green-600 text-white font-bold py-4 px-10 rounded-full hover:bg-green-600 shadow-xl">
+                    Start Input
+                </button>
+            </div>
+        </div>
 
-    </div>
-    <div id="input-forms" class="step-content hidden">
-      <p>This is the Input Forms step content.</p>
-    </div>
-    <div id="validation" class="step-content hidden">
-      <p>This is the Validation step content.</p>
-    </div>
-    <div id="result" class="step-content hidden">
-      <p>This is the Result step content.</p>
-    </div>
+        <div id="input-forms" class="step-content hidden">
+            <p class="text-md text-center mb-5 text-gray-500 font-semibold">In this part, we'll be analyzing the fish's physical state based on your inputs.</p>
+            <div class="flex flex-col items-start">
+                <label for="general-appearance" class="text-sm font-semibold mb-2 text-gray-500">General Appearance</label>
+                <div class="dropdown mb-4 relative">
+                    <button onclick="toggleDropdown(this)" class="btn m-1 w-[450px] text-white rounded-full bg-gradient-to-r from-purple-500 to-pink-500">
+                        <i class="fas fa-fish"></i>
+                        Skin, Bloodspots, Stiffness and Smell (Click)
+                    </button>
+                    <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-64 p-2 shadow-2xl">
+                        <li class="bg-gray-200"><a href="#" onclick="openPopup('brightness')">Rate the brightness of the skin</a></li>
+                        <li class="bg-gray-300"><a href="#" onclick="openPopup('bloodspot')">Scale of bloodspots found on the gills</a></li>
+                        <li class="bg-gray-300"><a href="#" onclick="openPopup('stiffness')">Rate the stiffness of the fish</a></li>
+                        <li class="bg-gray-300"><a href="#" onclick="openPopup('belly')">Firmness of the belly</a></li>
+                        <li class="bg-gray-300"><a href="#" onclick="openPopup('smellofthefish')">Identify the smell of the fish</a></li>
+                    </ul>
+                </div>
 
-  </div>
-  <label class="modal-backdrop" for="my_modal_7">Close</label>
+                <label for="eyes" class="text-sm font-semibold mb-2 text-gray-500">Eyes</label>
+                <div class="dropdown mb-4 relative">
+                    <button onclick="toggleDropdown(this)" class="btn m-1 w-[450px] rounded-full bg-gradient-to-r from-blue-500 to-green-500 text-white">
+                        <i class="fas fa-eye"></i>
+                       Clarity & Shape (Click)
+                    </button>
+                    <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-64 p-2 shadow-2xl">
+                        <li class="bg-gray-200"><a href="#" onclick="openPopup('clarity')">Describe the clarity of the fish eyes</a></li>
+                        <li class="bg-gray-300"><a href="#" onclick="openPopup('shape')">What's the shape of the eyes?</a></li>
+                    </ul>
+                </div>
+
+                <label for="gills" class="text-sm font-semibold mb-2 text-gray-500">Gills</label>
+                <div class="dropdown mb-4 relative">
+                    <button onclick="toggleDropdown(this)" class="btn m-1 w-[450px] rounded-full bg-gradient-to-r from-red-500 to-yellow-500 text-white">
+                        <i class="fas fa-puzzle-piece"></i>
+                        Colour & Smell (Click)
+                    </button>
+                    <ul class="dropdown-content menu bg-base-100 rounded-box z-[1] w-64 p-2 shadow-2xl">
+                        <li class="bg-gray-200"><a href="#" onclick="openPopup('colour')">Colour of the gills</a></li>
+                        <li class="bg-gray-300"><a href="#" onclick="openPopup('smell')">Smell coming from the gills</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <label class="modal-backdrop" for="my_modal_7">Close</label>
 </div>
 
-<!-- JavaScript to toggle visibility of steps -->
-<script>
-  function showStep(step) {
-    // Hide all steps
-    const steps = document.querySelectorAll('.step-content');
-    steps.forEach(function (stepDiv) {
-      stepDiv.classList.add('hidden');
-    });
+<!-- Popup Modal for Radio Buttons -->
+<div id="popupModal" class="dropdown-center hidden rounded-lg bg-white">
+    <h2 class="text-xl font-semibold mb-4" id="popupTitle">Select Option</h2>
+    <form id="popupForm"></form>
+    <button onclick="closePopup()" class="mt-4 bg-green-500 text-white font-semibold text-md py-2 px-6 rounded-full">Submit</button>
+</div>
 
-    // Show the selected step
-    const activeStep = document.getElementById(step);
-    if (activeStep) {
-      activeStep.classList.remove('hidden');
+<script>
+    // Options data for each category
+    const optionsData = {
+        brightness: [
+            { value: 0, label: 'Bright, shining' },
+            { value: 1, label: 'Bright' },
+            { value: 2, label: 'Dull' }
+        ],
+        bloodspot: [
+            { value: 0, label: 'None' },
+            { value: 1, label: 'Small, 10-30%' },
+            { value: 2, label: 'Big, 30-50%' },
+            { value: 3, label: 'Very Big, 50-100%' }
+        ],
+        stiffness: [
+            { value: 0, label: 'Stiff' },
+            { value: 1, label: 'Elastic' },
+            { value: 2, label: 'Firm' },
+            { value: 3, label: 'Soft' }
+        ],
+        belly: [
+            { value: 0, label: 'Firm' },
+            { value: 1, label: 'Soft' },
+            { value: 2, label: 'Belly Burst' }
+        ],
+        smellofthefish: [
+            { value: 0, label: 'Fresh' },
+            { value: 1, label: 'Neutral' },
+            { value: 2, label: 'Musty' },
+            { value: 3, label: 'Stale meat/rancid' }
+        ],
+        clarity: [
+            { value: 0, label: 'Clear' },
+            { value: 1, label: 'Cloudy' }
+        ],
+        shape: [
+            { value: 0, label: 'Normal' },
+            { value: 1, label: 'Plain' },
+            { value: 2, label: 'Sunken' }
+        ],
+        colour: [
+            { value: 0, label: 'Bright red' },
+            { value: 1, label: 'Dark red' },
+            { value: 2, label: 'Pale' }
+        ],
+        smell: [
+            { value: 0, label: 'Fresh' },
+            { value: 1, label: 'Neutral' },
+            { value: 2, label: 'Sweaty' },
+            { value: 3, label: 'Sour stink' }
+        ]
+    };
+
+    // Function to toggle dropdown visibility
+    function toggleDropdown(button) {
+        const dropdownMenu = button.nextElementSibling;
+        dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
     }
-  }
+
+    // Function to show popup modal with radio buttons
+    function openPopup(category) {
+        const options = optionsData[category];
+        const popupForm = document.getElementById("popupForm");
+        popupForm.innerHTML = ''; // Clear previous options
+        document.getElementById("popupTitle").innerText = `Please select an option for ${category}`;
+
+        options.forEach(option => {
+            const label = document.createElement("label");
+            label.classList.add("block", "mb-2");
+            label.innerHTML = `<input type="radio" name="option" value="${option.value}"> ${option.label}`;
+            popupForm.appendChild(label);
+        });
+
+        document.getElementById("popupModal").classList.remove('hidden');
+        document.body.classList.add('blurred'); // Apply blur effect to the body
+    }
+
+    // Function to close the popup modal
+    function closePopup() {
+        document.getElementById("popupModal").classList.add('hidden');
+        document.body.classList.remove('blurred'); // Remove blur effect
+    }
+
+    // Function to handle step switching
+    function showStep(step) {
+        const steps = document.querySelectorAll('.step-content');
+        steps.forEach(function (stepDiv) {
+            stepDiv.classList.add('hidden');
+        });
+
+        const activeStep = document.getElementById(step);
+        if (activeStep) {
+            activeStep.classList.remove('hidden');
+        }
+    }
 </script>
+
+</body>
+</html>
