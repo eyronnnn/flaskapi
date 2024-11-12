@@ -1,8 +1,52 @@
 <input type="checkbox" id="my_modal_7" class="modal-toggle" />
 <div class="modal" role="dialog">
-  <div class="modal-box">
-    <h3 class="text-lg font-bold">Hello!</h3>
-    <p class="py-4">This will open your camera in your device!</p>
+  <div class="modal-box" style="width: 1200px; height: 800px;"> <!-- Increased width and height -->
+    <!-- Larger Heading -->
+    <h3 class="text-4xl font-bold text-center mt-[-20] mb-6">Scanning Steps</h3>
+
+    <!-- Breadcrumbs centered -->
+    <div class="breadcrumbs text-md ml-12 text-center mb-6 font-bold">
+      <ul class="inline-flex space-x-2">
+        <li><a href="#" onclick="showStep('scan')" class="text-blue-500">Scan</a></li>
+        <li><a href="#" onclick="showStep('input-forms')" class="text-blue-500">Input forms</a></li>
+        <li><a href="#" onclick="showStep('validation')" class="text-blue-500">Validation</a></li>
+        <li><a href="#" onclick="showStep('result')" class="text-blue-500">Result</a></li>
+      </ul>
+    </div>
+
+    <!-- Sections hidden by default except for the first -->
+    <div id="scan" class="step-content">
+      <!-- Add the image in the scan section -->
+    <img src="{{ url_for( filename='.templates/components/scanpicture.png') }}" alt="Scan Image" class="w-full h-auto">
+
+    </div>
+    <div id="input-forms" class="step-content hidden">
+      <p>This is the Input Forms step content.</p>
+    </div>
+    <div id="validation" class="step-content hidden">
+      <p>This is the Validation step content.</p>
+    </div>
+    <div id="result" class="step-content hidden">
+      <p>This is the Result step content.</p>
+    </div>
+
   </div>
   <label class="modal-backdrop" for="my_modal_7">Close</label>
 </div>
+
+<!-- JavaScript to toggle visibility of steps -->
+<script>
+  function showStep(step) {
+    // Hide all steps
+    const steps = document.querySelectorAll('.step-content');
+    steps.forEach(function (stepDiv) {
+      stepDiv.classList.add('hidden');
+    });
+
+    // Show the selected step
+    const activeStep = document.getElementById(step);
+    if (activeStep) {
+      activeStep.classList.remove('hidden');
+    }
+  }
+</script>
