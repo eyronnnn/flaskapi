@@ -1,0 +1,33 @@
+<div role="alert" class="alert alert-info bg-gray-400 text-gray-100 fixed top-4 left-1/2 transform -translate-x-1/2 z-50 py-2 max-w-md border-none" id="batchScanAlert">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      class="stroke-info h-5 w-5 shrink-0">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <div class="flex flex-col gap-0">
+      <span class="font-semibold text-sm">Reminder: Batch Scanning</span>
+      <span class="text-xs">User should upload more than 10 images of the sample of fish to complete the scan</span>
+    </div>
+    <div>
+      <button class="btn btn-xs bg-gray-200 text-gray-800 hover:bg-gray-300" onclick="dismissAlert()">Cancel</button>
+      <button class="btn btn-xs btn-primary" onclick="dismissAlert()">Understood</button>
+    </div>
+</div>
+
+<script>
+function dismissAlert() {
+    const alert = document.getElementById('batchScanAlert');
+    alert.style.opacity = '0';
+    alert.style.transform = 'translate(-50%, -100%)';
+    alert.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+    setTimeout(() => {
+        alert.style.display = 'none';
+    }, 300);
+}
+</script>

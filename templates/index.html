@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="lofi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask + DaisyUI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
+
+    <style>
+        .text-shadow { text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.7); }
+        .text-shadow-2 { text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); }
+        .hover\:text-shadow-lg:hover { text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); }
+        html, body { overflow: hidden; height: 100%; }
+        .blurred { 
+            filter: blur(5px);
+            transition: filter 0.3s ease-in-out;
+            transform: none !important;
+        }
+
+        /* Unified transition styles */
+        .page-transition {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            transform: translateY(100%);
+            transition: transform 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 h-screen flex flex-col" style="font-family: 'General Sans', sans-serif; position: relative;">
+    <div class="page-transition"></div>
+
+    {% include 'components/navbar.html' %}
+
+    <div class="flex flex-col items-center justify-start h-full pt-12" id="contentContainer">
+        <div id="loadingSkeleton" class="w-full flex justify-center">
+            {% include 'components/skeleton.html' %}
+        </div>
+
+        <div id="content" class="hidden w-full flex justify-center gap-8" style="transform: none !important;">
+            <div class="absolute left-48 top-[350px] max-w-md text-right" style="transform: none !important;">
+                <h1 class="text-6xl font-bold mb-6 text-shadow-1">AquaGrade</h1>
+                <p class="text-lg text-gray-700 leading-relaxed">
+                    A sophisticated system designed to scan and grade fish quality with precision.
+                </p>
+                <div class="flex gap-4 justify-end mt-10">
+                    {% include 'components/avatar.html' %}
+                    {% include 'components/avatar.html' %}
+                </div>
+            </div>
+
+            <div class="relative w-96 h-96 mt-20">
+                <div class="content-box h-[500px] w-full bg-white absolute top-0 left-[420px] rounded-2xl shadow-xl">
+                    <div class="flex flex-col items-center gap-4 pt-8">
+                        <h3 class="text-2xl font-semibold mb-2">Describe Your Fish</h3>
+                        <p class="text-gray-600 text-sm mb-6 max-w-xs text-center">Enter the characteristics of your fish sample to get detailed quality analysis</p>
+                        <div class="flex items-center w-full max-w-[300px] mb-4">
+                            <label class="text-blue-600 text-sm w-24">Odor</label>
+                            {% include 'components/textinput.html' %}
+                        </div>
+                        <div class="flex items-center w-full max-w-[300px] mb-4">
+                            <label class="text-green-600 text-sm w-24">Color</label>
+                            {% include 'components/textinput.html' %}
+                        </div>
+                        <div class="flex items-center w-full max-w-[300px] mb-4">
+                            <label class="text-purple-600 text-sm w-24">Eye</label>
+                            {% include 'components/textinput.html' %}
+                        </div>
+                        <div class="flex items-center w-full max-w-[300px] mb-4">
+                            <label class="text-red-600 text-sm w-24">Gills</label>
+                            {% include 'components/textinput.html' %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="content-box h-[250px] w-full bg-white absolute top-0 left-[-40px] rounded-2xl shadow-xl" id="fileInputContainer">
+                </div>
+                
+                <div class="content-box h-[100px] w-[300px] bg-white absolute top-72 left-[50px] rounded-full shadow-xl flex items-center justify-center cursor-pointer" onclick="document.getElementById('my_modal_7').checked = true;">
+                    {% include 'components/singlescan.html' %}
+                </div>
+
+                <div class="content-box h-[100px] w-[300px] bg-white absolute top-[400px] left-[50px] rounded-full shadow-xl flex items-center justify-center">
+                    <div onclick="showFileInput()" class="cursor-pointer">
+                        {% include 'components/batchscan.html' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'components/pagination.html' %}
+    {% include 'components/scanmodal.html' %}
+
+    <div id="batchScanAlertContainer"></div>
+
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('loadingSkeleton').style.display = 'none';
+                document.getElementById('content').style.display = 'flex';
+            }, 3000);
+        });
+
+        function showFileInput() {
+    const container = document.getElementById('fileInputContainer');
+    const alertContainer = document.getElementById('batchScanAlertContainer');
+    const contentContainer = document.getElementById('contentContainer');
+
+    fetch('/get-file-input')
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+
+            return fetch('/get-batchscanreminder');
+        })
+        .then(response => response.text())
+        .then(html => {
+            alertContainer.innerHTML = html;
+
+            contentContainer.style.filter = 'blur(5px)';
+            contentContainer.style.transition = 'all 0.3s ease-in-out';
+
+            const alertElement = alertContainer.querySelector('#batchScanAlert');
+            const buttons = alertElement.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    contentContainer.style.filter = '';
+                    alertElement.style.transition = 'all 0.3s ease-out';
+                    alertElement.style.opacity = '0';
+                    setTimeout(() => {
+                        alertContainer.innerHTML = '';
+                    }, 300);
+                });
+            });
+        });
+}
+
+        document.querySelectorAll('.join-item').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                const transition = document.querySelector('.page-transition');
+                
+                transition.style.transform = 'translateY(0)';
+                
+                setTimeout(() => {
+                    window.location.href = href;
+                }, 500);
+            });
+        });
+    </script>
+
+</body>
+</html>
