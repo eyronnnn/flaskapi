@@ -91,13 +91,22 @@
         <!-- Left Column: Fish Freshness Detector -->
         <div class="bg-gray-200 shadow-box rounded-lg p-6">
             <h1 class="text-center text-3xl font-bold text-gray-800 mb-6">Fish Freshness Detector</h1>
-            
             <!-- Option Tabs -->
             <div class="mb-4 flex justify-between shadow-lg">
                 <button id="uploadTab" class="tab-button active w-1/4 py-2 px-4 rounded-l-lg" style="font-family: 'Clash Display', sans-serif; background-color: rgb(113, 19, 19);">Upload</button>
                 <button id="captureTab" class="tab-button w-1/4 py-2 px-4" style="font-family: 'Clash Display', sans-serif;">Capture</button>
                 <button id="batchTab" class="tab-button w-1/4 py-2 px-4" style="font-family: 'Clash Display', sans-serif;">Batch</button>
                 <button id="videoTab" class="tab-button w-1/4 py-2 px-4 rounded-r-lg" style="font-family: 'Clash Display', sans-serif;">Real-time</button>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div id="uploadProgress" class="">
+                <div class="flex items-center">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+            <div id="uploadProgressValue" class="bg-red-800 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <span id="uploadProgressPercentage" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-100">100%</span>
+                </div>
             </div>
 
             <!-- Upload Image Section -->
@@ -155,6 +164,12 @@
                 <h2 class="text-lg font-semibold">Inference Result:</h2>
                 <pre id="resultData" class="bg-gray-200 p-4 rounded-lg overflow-auto text-sm text-gray-700 shadow-lg"></pre>
             </div>
+
+            <!-- Download JSON -->
+            <div id="downloadDiv" class="mt-4">
+                <h2 class="text-lg font-extrabold"></h2>
+                <button id="downloadButton" class="w-full py-2 px-4 bg-red-800 text-white rounded-lg shadow-lg" onclick="downloadJSONFile()">Download JSON</button>
+            </div>
         </div>
 
         <!-- Center Column: Input Forms -->
@@ -183,15 +198,18 @@
                 <span class="text-gray-500">Chart Placeholder</span>
             </div>
         </div>
-    </div>
 
+
+    </div>
     <script>
-        // Original JavaScript logic provided
         const uploadForm = document.getElementById('uploadForm');
         const batchForm = document.getElementById('batchForm');
         const resultDiv = document.getElementById('resultDiv');
         const resultData = document.getElementById('resultData');
-        const videoResultData = document.getElementById('videoResultData');
+        const downloadButton = document.getElementById('downloadButton');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const uploadProgressValue = document.getElementById('uploadProgressValue');
+        const uploadProgressPercentage = document.getElementById('uploadProgressPercentage');
         const captureSection = document.getElementById('captureSection');
         const videoSection = document.getElementById('videoSection');
         const webcam = document.getElementById('webcam');
@@ -200,14 +218,14 @@
         const capture = document.getElementById('capture');
         const startWebcam = document.getElementById('startWebcam');
         const startVideo = document.getElementById('startVideo');
-        const uploadTab = document.getElementById('uploadTab');
-        const captureTab = document.getElementById('captureTab');
-        const batchTab = document.getElementById('batchTab');
-        const videoTab = document.getElementById('videoTab');
 
         let streaming = false;
+        let predictionData = null;
 
-        // Tab Switching
+        // Hide download button initially
+        downloadButton.style.display = 'none';
+
+        // Tab Switching Logic
         const allTabs = [uploadTab, captureTab, batchTab, videoTab];
         const sections = [uploadForm, captureSection, batchForm, videoSection];
 
@@ -226,7 +244,7 @@
             });
         });
 
-        // Start Webcam
+        // Start Webcam Logic
         startWebcam.addEventListener('click', async () => {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -239,7 +257,7 @@
             }
         });
 
-        // Capture Image
+        // Capture Image Logic
         capture.addEventListener('click', () => {
             const context = snapshot.getContext('2d');
             snapshot.width = webcam.videoWidth;
@@ -260,9 +278,12 @@
                         throw new Error('Upload failed.');
                     }
 
-                    const data = await response.json();
-                    resultData.textContent = JSON.stringify(data, null, 2);
+                    predictionData = await response.json();
+                    resultData.textContent = JSON.stringify(predictionData, null, 2);
                     resultDiv.classList.remove('hidden');
+
+                    // Show the download button if prediction data exists
+                    downloadButton.style.display = predictionData ? 'block' : 'none';
                 } catch (error) {
                     console.error('Error uploading snapshot:', error);
                     alert('Snapshot upload failed.');
@@ -270,7 +291,7 @@
             }, 'image/jpeg');
         });
 
-        // Upload Form Submission
+        // Upload Form Submission Logic
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(uploadForm);
@@ -285,15 +306,18 @@
                     throw new Error('Failed to upload image.');
                 }
 
-                const data = await response.json();
-                resultData.textContent = JSON.stringify(data, null, 2);
+                predictionData = await response.json();
+                resultData.textContent = JSON.stringify(predictionData, null, 2);
                 resultDiv.classList.remove('hidden');
+
+                // Show the download button if prediction data exists
+                downloadButton.style.display = predictionData ? 'block' : 'none';
             } catch (error) {
                 console.error('Error:', error);
             }
         });
 
-        // Batch Form Submission
+        // Batch Form Submission Logic
         batchForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(batchForm);
@@ -308,56 +332,61 @@
                     throw new Error('Failed to upload batch.');
                 }
 
-                const data = await response.json();
-                resultData.textContent = JSON.stringify(data, null, 2);
+                predictionData = await response.json();
+                resultData.textContent = JSON.stringify(predictionData, null, 2);
                 resultDiv.classList.remove('hidden');
+
+                // Show the download button if prediction data exists
+                downloadButton.style.display = predictionData ? 'block' : 'none';
             } catch (error) {
                 console.error('Error:', error);
             }
         });
 
-        // Start Real-Time Video Analysis
-        startVideo.addEventListener('click', async () => {
-            if (!streaming) {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                videoStream.srcObject = stream;
-                streaming = true;
-                analyzeFrame();
-            }
+        // Update progress bar during file upload
+        uploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload-single-image', true);
+
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const percent = (event.loaded / event.total) * 100;
+                    uploadProgressValue.style.width = `${percent}%`;
+                    uploadProgressPercentage.textContent = `${Math.round(percent)}%`;
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    predictionData = JSON.parse(xhr.responseText);
+                    resultData.textContent = JSON.stringify(predictionData, null, 2);
+                    resultDiv.classList.remove('hidden');
+                    downloadButton.style.display = predictionData ? 'block' : 'none';
+                } else {
+                    console.error('Upload failed');
+                }
+            };
+
+            xhr.send(formData);
         });
 
-        async function analyzeFrame() {
-            if (!streaming) return;
-
-            const videoCanvas = document.createElement('canvas');
-            videoCanvas.width = 640;
-            videoCanvas.height = (640 / videoStream.videoWidth) * videoStream.videoHeight;
-            const videoContext = videoCanvas.getContext('2d');
-            videoContext.drawImage(videoStream, 0, 0, videoCanvas.width, videoCanvas.height);
-
-            videoCanvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append('file', blob, 'frame.jpg');
-
-                try {
-                    const response = await fetch('/upload-single-image', {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-
-                    const data = await response.json();
-                    videoResultData.textContent = JSON.stringify(data, null, 2);
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            }, 'image/jpeg');
-
-            setTimeout(analyzeFrame, 500); // Process a frame every 500ms
+        // Download JSON Functionality
+        function downloadJSONFile() {
+            if (predictionData) {
+                const blob = new Blob([JSON.stringify(predictionData, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'prediction_data.json';
+                link.click();
+            }
         }
+
+        // Listen for button click to download JSON
+        downloadButton.addEventListener('click', downloadJSONFile);
+
     </script>
+
 </body>
 </html>
