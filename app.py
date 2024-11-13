@@ -1,22 +1,45 @@
-from flask import Flask, render_template
+import os
+from flask import Flask, render_template, request, jsonify
+from inference_sdk import InferenceHTTPClient
 
 app = Flask(__name__)
 
+# Initialize Roboflow Inference Client
+CLIENT = InferenceHTTPClient(
+    api_url="https://detect.roboflow.com",
+    api_key="KLuysgojSyV9rMNLr20y"
+)
+
+# Ensure the 'uploads' directory exists
+UPLOAD_FOLDER = 'uploads'
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
 @app.route('/')
 def home():
-    return render_template('index.html')  # First page content
+    return render_template('index.html')
 
-@app.route('/page1')
-def page1():
-    return render_template('secondpage.html')  # Second page content
+@app.route('/upload-single-image', methods=['POST'])
+def upload_single_image():
+    file = request.files['file']
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(file_path)
+    result = CLIENT.infer(file_path, model_id="fish-freshness-6-sb0n6/2")
+    return jsonify(result)
 
-@app.route('/get-file-input')
-def get_file_input():
-    return render_template('components/fileinput.html')
+@app.route('/upload-batch-images', methods=['POST'])
+def upload_batch_images():
+    files = request.files.getlist('files')
+    results = []
 
-@app.route('/get-batchscanreminder')
-def get_batchscanreminder():
-    return render_template('components/batchscanreminder.html')
+    for file in files:
+        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+        file.save(file_path)
+        result = CLIENT.infer(file_path, model_id="fish-freshness-6-sb0n6/2")
+        results.append({file.filename: result})
+
+    return jsonify(results)
 
 if __name__ == '__main__':
     app.run(debug=True)
+
