@@ -1,6 +1,6 @@
 Flask
-google-api-core
-google-cloud-logging
-grpcio-status
-protobuf
-tensorflow
+google-api-core==2.19.1
+google-cloud-logging==3.11.1
+grpcio-status==1.62.3
+protobuf==4.25.5
+tensorflow-intel==2.16.1
