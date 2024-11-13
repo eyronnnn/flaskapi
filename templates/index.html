@@ -1,160 +1,363 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="lofi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask + DaisyUI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
-    <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
-
+    <title>Fish Freshness Detector</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.0.3/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=archivo@400&f[]=clash-display@600&display=swap" rel="stylesheet">
     <style>
-        .text-shadow { text-shadow: 2px 2px 5px rgba(255, 255, 255, 0.7); }
-        .text-shadow-2 { text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); }
-        .hover\:text-shadow-lg:hover { text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7); }
-        html, body { overflow: hidden; height: 100%; }
-        .blurred { 
-            filter: blur(5px);
-            transition: filter 0.3s ease-in-out;
-            transform: none !important;
+        body {
+            font-family: 'Archivo', sans-serif;
         }
 
-        /* Unified transition styles */
-        .page-transition {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9999;
-            transform: translateY(100%);
-            transition: transform 0.5s ease-in-out;
+        h1 {
+            font-family: 'Clash Display', sans-serif;
+        }
+
+        button {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .shadow-box {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            transform: scale(1.05);
+        }
+        .tab-button {
+            background-color: black;
+            color: #fff;
+        }
+
+        .tab-button.active {
+            background-color: #333;
+        }
+
+        .rounded-lg {
+            border-radius: 8px;
+        }
+
+        .shadow-lg {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-icon {
+            display: inline-block;
+            width: 14px; 
+            height: 14px; 
+            background-color: #bebebe; 
+            color: white;
+            font-size: 8px; 
+            font-weight: bold;
+            text-align: center;
+            line-height: 14px; 
+            border-radius: 50%;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .info-icon:hover::after {
+            content: attr(data-info);
+            position: absolute;
+            left: 110%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #333;
+            color: #fff;
+            padding: 8px;
+            border-radius: 5px;
+            width: 250px;
+            font-size: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        video {
+            width: 640px;
+            height: auto;
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 h-screen flex flex-col" style="font-family: 'General Sans', sans-serif; position: relative;">
-    <div class="page-transition"></div>
+<body style="background-color: white;">
 
-    {% include 'components/navbar.html' %}
+    <div class="min-h-screen grid grid-cols-3 gap-6 p-6">
+        <!-- Left Column: Fish Freshness Detector -->
+        <div class="bg-gray-200 shadow-box rounded-lg p-6">
+            <h1 class="text-center text-3xl font-bold text-gray-800 mb-6">Fish Freshness Detector</h1>
+            
+            <!-- Option Tabs -->
+            <div class="mb-4 flex justify-between shadow-lg">
+                <button id="uploadTab" class="tab-button active w-1/4 py-2 px-4 rounded-l-lg" style="font-family: 'Clash Display', sans-serif; background-color: rgb(113, 19, 19);">Upload</button>
+                <button id="captureTab" class="tab-button w-1/4 py-2 px-4" style="font-family: 'Clash Display', sans-serif;">Capture</button>
+                <button id="batchTab" class="tab-button w-1/4 py-2 px-4" style="font-family: 'Clash Display', sans-serif;">Batch</button>
+                <button id="videoTab" class="tab-button w-1/4 py-2 px-4 rounded-r-lg" style="font-family: 'Clash Display', sans-serif;">Real-time</button>
+            </div>
 
-    <div class="flex flex-col items-center justify-start h-full pt-12" id="contentContainer">
-        <div id="loadingSkeleton" class="w-full flex justify-center">
-            {% include 'components/skeleton.html' %}
-        </div>
+            <!-- Upload Image Section -->
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="mb-4">
+                    <label for="file" class="block text-sm font-medium text-gray-700 mb-5">
+                        Upload an image
+                        <span class="info-icon" data-info="Use this feature to upload a single image from your device for freshness detection.">i</span>
+                    </label>
+                    <input type="file" id="file" name="file" accept="image/*" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-lg">
+                </div>
+                <button type="submit" class="w-full py-2 px-4 text-white rounded-lg hover:shadow-lg" style="font-family: 'Clash Display', sans-serif; background: linear-gradient(to right, #8B0000, #B22222);">Upload  Image</button>
+            </form>
 
-        <div id="content" class="hidden w-full flex justify-center gap-8" style="transform: none !important;">
-            <div class="absolute left-48 top-[350px] max-w-md text-right" style="transform: none !important;">
-                <h1 class="text-6xl font-bold mb-6 text-shadow-1">AquaGrade</h1>
-                <p class="text-lg text-gray-700 leading-relaxed">
-                    A sophisticated system designed to scan and grade fish quality with precision.
-                </p>
-                <div class="flex gap-4 justify-end mt-10">
-                    {% include 'components/avatar.html' %}
-                    {% include 'components/avatar.html' %}
+            <!-- Capture Image Section -->
+            <div id="captureSection" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-5">
+                    Capture an image
+                    <span class="info-icon" data-info="Use this feature to capture an image directly from your webcam. Ensure camera permissions are granted.">i</span>
+                </label>
+                <button id="startWebcam" class="w-full py-2 px-4 bg-black text-white rounded-lg hover:bg-gray-900 shadow-lg mt-2" style="font-family: 'Clash Display', sans-serif;background: linear-gradient(to right, #8B0000, #B22222);">Start Webcam</button>
+                <video id="webcam" autoplay class="mt-4 w-full rounded-lg shadow-lg hidden"></video>
+                <canvas id="snapshot" class="hidden"></canvas>
+                <button id="capture" class="w-full py-2 px-4 bg-black text-white rounded-lg mt-2 hover:bg-gray-900 shadow-lg hidden">Capture Image</button>
+            </div>
+
+            <!-- Batch Upload Section -->
+            <form id="batchForm" enctype="multipart/form-data" class="hidden">
+                <div class="mb-4">
+                    <label for="files" class="block text-sm font-medium text-gray-700 mb-5">
+                        Upload multiple images
+                        <span class="info-icon" data-info="Use this feature to upload multiple images at once for batch freshness detection.">i</span>
+                    </label>
+                    <input type="file" id="files" name="files" accept="image/*" multiple class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-lg">
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-black text-white rounded-lg hover:bg-gray-900 shadow-lg" style="font-family: 'Clash Display', sans-serif; background: linear-gradient(to right, #8B0000, #B22222);">Upload Batch</button>
+            </form>
+
+            <!-- Real-time Video Section -->
+            <div id="videoSection" class="hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-5">
+                    Real-time video analysis
+                    <span class="info-icon" data-info="Use this feature to analyze video frames in real-time from your webcam.">i</span>
+                </label>
+                <button id="startVideo" class="w-full py-2 px-4 bg-black text-white rounded-lg hover:bg-gray-900 shadow-lg mt-2" style="font-family: 'Clash Display', sans-serif;background: linear-gradient(to right, #8B0000, #B22222);">Start Real-time Analysis</button>
+                <video id="videoStream" autoplay class="mt-4 rounded-lg shadow-lg"></video>
+                <div class="mt-4">
+                    <h2 class="text-lg font-semibold">Real-time Inference Result:</h2>
+                    <pre id="videoResultData" class="bg-gray-200 p-4 rounded-lg overflow-auto text-sm text-gray-700 shadow-lg"></pre>
                 </div>
             </div>
 
-            <div class="relative w-96 h-96 mt-20">
-                <div class="content-box h-[500px] w-full bg-white absolute top-0 left-[420px] rounded-2xl shadow-xl">
-                    <div class="flex flex-col items-center gap-4 pt-8">
-                        <h3 class="text-2xl font-semibold mb-2">Describe Your Fish</h3>
-                        <p class="text-gray-600 text-sm mb-6 max-w-xs text-center">Enter the characteristics of your fish sample to get detailed quality analysis</p>
-                        <div class="flex items-center w-full max-w-[300px] mb-4">
-                            <label class="text-blue-600 text-sm w-24">Odor</label>
-                            {% include 'components/dropdown.html' %}
-                        </div>
-                        <div class="flex items-center w-full max-w-[300px] mb-4">
-                            <label class="text-green-600 text-sm w-24">Color</label>
-                            {% include 'components/dropdownright.html' %}
-                        </div>
-                        <div class="flex items-center w-full max-w-[300px] mb-4">
-                            <label class="text-purple-600 text-sm w-24">Eye</label>
-                            {% include 'components/dropdown.html' %}
-                        </div>
-                        <div class="flex items-center w-full max-w-[300px] mb-4">
-                            <label class="text-red-600 text-sm w-24">Gills</label>
-                            {% include 'components/dropdownright.html' %}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="content-box h-[250px] w-full bg-white absolute top-0 left-[-40px] rounded-2xl shadow-xl" id="fileInputContainer">
-                </div>
-                
-                <div class="content-box h-[100px] w-[300px] bg-white absolute top-72 left-[50px] rounded-full shadow-xl flex items-center justify-center cursor-pointer" onclick="document.getElementById('my_modal_7').checked = true;">
-                    {% include 'components/singlescan.html' %}
-                </div>
+            <!-- Result Display -->
+            <div id="resultDiv" class="mt-4 hidden">
+                <h2 class="text-lg font-semibold">Inference Result:</h2>
+                <pre id="resultData" class="bg-gray-200 p-4 rounded-lg overflow-auto text-sm text-gray-700 shadow-lg"></pre>
+            </div>
+        </div>
 
-                <div class="content-box h-[100px] w-[300px] bg-white absolute top-[400px] left-[50px] rounded-full shadow-xl flex items-center justify-center">
-                    <div onclick="showFileInput()" class="cursor-pointer">
-                        {% include 'components/batchscan.html' %}
-                    </div>
+        <!-- Center Column: Input Forms -->
+        <div class="bg-background text-text shadow-box rounded-lg p-6">
+            <h2 class="text-center text-2xl font-bold text-gray-800 mb-4">Input Forms</h2>
+            <form>
+                <div class="mb-4">
+                    <label for="fishName" class="block text-sm font-medium text-gray-700">Fish Name</label>
+                    <input type="text" id="fishName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
                 </div>
+                <div class="mb-4">
+                    <label for="fishWeight" class="block text-sm font-medium text-gray-700">Weight (kg)</label>
+                    <input type="number" id="fishWeight" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <button type="submit" class="w-full py-2 px-4 bg-black text-white rounded-lg hover:bg-gray-900 shadow-lg">Submit</button>
+            </form>
+        </div>
+
+        <!-- Right Column: Charts -->
+        <div class="bg-white shadow-box rounded-lg p-6">
+            <h2 class="text-center text-2xl font-bold text-gray-800 mb-4">Charts</h2>
+            <div class="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                <span class="text-gray-500">Chart Placeholder</span>
+            </div>
+            <div class="mt-4 w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                <span class="text-gray-500">Chart Placeholder</span>
             </div>
         </div>
     </div>
 
-    {% include 'components/pagination.html' %}
-    {% include 'components/scanmodal.html' %}
-
-    <div id="batchScanAlertContainer"></div>
-
     <script>
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                document.getElementById('loadingSkeleton').style.display = 'none';
-                document.getElementById('content').style.display = 'flex';
-            }, 3000);
-        });
+        // Original JavaScript logic provided
+        const uploadForm = document.getElementById('uploadForm');
+        const batchForm = document.getElementById('batchForm');
+        const resultDiv = document.getElementById('resultDiv');
+        const resultData = document.getElementById('resultData');
+        const videoResultData = document.getElementById('videoResultData');
+        const captureSection = document.getElementById('captureSection');
+        const videoSection = document.getElementById('videoSection');
+        const webcam = document.getElementById('webcam');
+        const videoStream = document.getElementById('videoStream');
+        const snapshot = document.getElementById('snapshot');
+        const capture = document.getElementById('capture');
+        const startWebcam = document.getElementById('startWebcam');
+        const startVideo = document.getElementById('startVideo');
+        const uploadTab = document.getElementById('uploadTab');
+        const captureTab = document.getElementById('captureTab');
+        const batchTab = document.getElementById('batchTab');
+        const videoTab = document.getElementById('videoTab');
 
-        function showFileInput() {
-    const container = document.getElementById('fileInputContainer');
-    const alertContainer = document.getElementById('batchScanAlertContainer');
-    const contentContainer = document.getElementById('contentContainer');
+        let streaming = false;
 
-    fetch('/get-file-input')
-        .then(response => response.text())
-        .then(html => {
-            container.innerHTML = html;
+        // Tab Switching
+        const allTabs = [uploadTab, captureTab, batchTab, videoTab];
+        const sections = [uploadForm, captureSection, batchForm, videoSection];
 
-            return fetch('/get-batchscanreminder');
-        })
-        .then(response => response.text())
-        .then(html => {
-            alertContainer.innerHTML = html;
-
-            contentContainer.style.filter = 'blur(5px)';
-            contentContainer.style.transition = 'all 0.3s ease-in-out';
-
-            const alertElement = alertContainer.querySelector('#batchScanAlert');
-            const buttons = alertElement.querySelectorAll('button');
-            buttons.forEach(button => {
-                button.addEventListener('click', () => {
-                    contentContainer.style.filter = '';
-                    alertElement.style.transition = 'all 0.3s ease-out';
-                    alertElement.style.opacity = '0';
-                    setTimeout(() => {
-                        alertContainer.innerHTML = '';
-                    }, 300);
+        allTabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => {
+                sections.forEach((section, i) => {
+                    if (index === i) {
+                        section.classList.remove('hidden');
+                        allTabs[i].classList.add('active');
+                    } else {
+                        section.classList.add('hidden');
+                        allTabs[i].classList.remove('active');
+                    }
                 });
+                resultDiv.classList.add('hidden'); // Hide result when switching tabs
             });
         });
-}
 
-        document.querySelectorAll('.join-item').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const href = this.getAttribute('href');
-                const transition = document.querySelector('.page-transition');
-                
-                transition.style.transform = 'translateY(0)';
-                
-                setTimeout(() => {
-                    window.location.href = href;
-                }, 500);
-            });
+        // Start Webcam
+        startWebcam.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                webcam.srcObject = stream;
+                webcam.classList.remove('hidden');
+                capture.classList.remove('hidden');
+            } catch (error) {
+                console.error('Webcam access error:', error);
+                alert('Failed to access the camera. Please allow permissions and try again.');
+            }
         });
+
+        // Capture Image
+        capture.addEventListener('click', () => {
+            const context = snapshot.getContext('2d');
+            snapshot.width = webcam.videoWidth;
+            snapshot.height = webcam.videoHeight;
+            context.drawImage(webcam, 0, 0, snapshot.width, snapshot.height);
+
+            snapshot.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'snapshot.jpg');
+
+                try {
+                    const response = await fetch('/upload-single-image', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Upload failed.');
+                    }
+
+                    const data = await response.json();
+                    resultData.textContent = JSON.stringify(data, null, 2);
+                    resultDiv.classList.remove('hidden');
+                } catch (error) {
+                    console.error('Error uploading snapshot:', error);
+                    alert('Snapshot upload failed.');
+                }
+            }, 'image/jpeg');
+        });
+
+        // Upload Form Submission
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+
+            try {
+                const response = await fetch('/upload-single-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to upload image.');
+                }
+
+                const data = await response.json();
+                resultData.textContent = JSON.stringify(data, null, 2);
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        // Batch Form Submission
+        batchForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(batchForm);
+
+            try {
+                const response = await fetch('/upload-batch-images', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to upload batch.');
+                }
+
+                const data = await response.json();
+                resultData.textContent = JSON.stringify(data, null, 2);
+                resultDiv.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        // Start Real-Time Video Analysis
+        startVideo.addEventListener('click', async () => {
+            if (!streaming) {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoStream.srcObject = stream;
+                streaming = true;
+                analyzeFrame();
+            }
+        });
+
+        async function analyzeFrame() {
+            if (!streaming) return;
+
+            const videoCanvas = document.createElement('canvas');
+            videoCanvas.width = 640;
+            videoCanvas.height = (640 / videoStream.videoWidth) * videoStream.videoHeight;
+            const videoContext = videoCanvas.getContext('2d');
+            videoContext.drawImage(videoStream, 0, 0, videoCanvas.width, videoCanvas.height);
+
+            videoCanvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('file', blob, 'frame.jpg');
+
+                try {
+                    const response = await fetch('/upload-single-image', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json();
+                    videoResultData.textContent = JSON.stringify(data, null, 2);
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            }, 'image/jpeg');
+
+            setTimeout(analyzeFrame, 500); // Process a frame every 500ms
+        }
     </script>
-
 </body>
 </html>
