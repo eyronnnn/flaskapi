@@ -167,8 +167,10 @@ tensorboard==2.16.2
     # via tensorflow-intel
 tensorboard-data-server==0.7.2
     # via tensorboard
-tensorflow-intel==2.16.1
+tensorflow==2.16.1
     # via -r requirements.in
+tensorflow-intel==2.16.1
+    # via tensorflow
 termcolor==2.4.0
     # via tensorflow-intel
 typing-extensions==4.12.2
