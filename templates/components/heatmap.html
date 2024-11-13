@@ -1,0 +1,36 @@
+<div class="w-full max-w-4xl mx-auto mt-12">
+  <h2 class="text-2xl text-center text-white mb-4">Scanning Heatmap</h2>
+  <div id="heatmap"></div>
+</div>
+
+<script>
+  const heatmapData = [
+    { date: "2024-11-06", value: 20 },
+    { date: "2024-11-07", value: 15 },
+    { date: "2024-11-08", value: 30 },
+    { date: "2024-11-09", value: 40 },
+    { date: "2024-11-10", value: 35 },
+    { date: "2024-11-11", value: 50 },
+    { date: "2024-11-12", value: 25 },
+  ];
+
+  const calendar = new CalHeatmap();
+  calendar.paint({
+    data: heatmapData,
+    start: new Date("2024-11-06"),
+    range: 7,
+    domain: "day",
+    subDomain: "hour",
+    subDomainTextFormat: "%H",
+    highlight: ["2024-11-06"],
+    legend: [5, 10, 15, 20, 25],
+    legendColors: {
+      min: "#444", // Darker shade for min values
+      max: "#00FF00", // Bright green for max
+      empty: "#222", // Default for empty cells
+    },
+  });
+</script>
+
+<link rel="stylesheet" href="https://unpkg.com/cal-heatmap/dist/cal-heatmap.css" />
+<script src="https://unpkg.com/cal-heatmap"></script>
