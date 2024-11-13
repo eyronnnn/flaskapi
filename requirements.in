@@ -1,6 +1,0 @@
-Flask
-google-api-core
-google-cloud-logging
-grpcio-status
-protobuf
-tensorflow==2.16.1  # Locking to supported version
