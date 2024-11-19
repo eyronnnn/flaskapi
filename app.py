@@ -1,4 +1,7 @@
 import os
+import threading
+import time
+import requests
 from flask import Flask, render_template, request, jsonify
 from inference_sdk import InferenceHTTPClient
 
@@ -44,7 +47,20 @@ def upload_batch_images():
 
     return jsonify(results)
 
+def keep_alive():
+    """Periodically send a GET request to keep the app alive."""
+    while True:
+        try:
+            requests.get("https://flaskapi-ylia.onrender.com")  # Replace with your deployed URL
+            print("Keep-alive ping successful.")
+        except Exception as e:
+            print(f"Keep-alive ping failed: {e}")
+        time.sleep(600)  # Ping every 10 minutes
+
 if __name__ == '__main__':
+    # Start the keep-alive thread
+    threading.Thread(target=keep_alive, daemon=True).start()
+
     # Use the PORT environment variable provided by Render, or default to 5000 for local development
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
