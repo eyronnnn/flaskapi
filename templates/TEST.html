@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Real-Time Detection</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg-color-video: #ffffff;
+      }
+
+      body.dark-mode {
+        --bg-color-video: #333333;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: #333333;
+        display: flex;
+        transition: all 0.5s ease;
+      }
+
+      body.dark-mode {
+        background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+        color: #f4f4f4;
+      }
+
+      .sidebar {
+        width: 300px;
+        background-color: #1a1a1a;
+        color: white;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        padding-top: 20px;
+      }
+
+      .sidebar a {
+        color: white;
+        text-decoration: none;
+        margin: 8px 20px;
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .main {
+        margin-left: 320px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        width: calc(100% - 320px);
+      }
+
+      video,
+      canvas {
+        width: 100%;
+        max-width: 700px;
+        height: 500px;
+        border-radius: 20px;
+        background: var(--bg-color-video);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        border: 2px dashed #c92525;
+        box-shadow: 0 4px 12px rgba(201, 37, 37, 0.2);
+      }
+
+      video:hover,
+      canvas:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      button {
+        background: linear-gradient(135deg, #c92525, #e13939);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 25px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      button:hover {
+        background: linear-gradient(135deg, #e13939, #ff4d4d);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+        transform: translateY(-2px);
+      }
+      .results-container {
+        background: white;
+        padding: 35px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        width: 30%;
+        transition: all 0.3s ease;
+        position: absolute;
+        right: 135px;
+        margin-top: -430px;
+      }
+
+      .results-container:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .results-container h2 {
+        font-size: 20px;
+        margin-bottom: 10px;
+        color: #c92525;
+      }
+
+      #results {
+        background: #e0e0e0;
+        color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: "Courier New", monospace;
+        overflow-y: auto;
+        max-height: 150px;
+        transition: all 0.3s ease;
+      }
+
+      body.dark-mode .results-container {
+        background: #3c3c3c;
+      }
+
+      body.dark-mode #results {
+        background: #333333;
+        color: #f4f4f4;
+      }
+
+      /* Dark Mode Toggle */
+      #theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 56px;
+        height: 28px;
+        border-radius: 9999px;
+        background-color: white;
+        cursor: pointer;
+        box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+      }
+
+      #slider {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: #c92525;
+        transition: all 0.5s;
+      }
+
+      .toggle-icon {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        transition: all 0.5s;
+      }
+
+      #sun-icon {
+        right: 8px;
+        color: #c92525;
+      }
+
+      #moon-icon {
+        left: 8px;
+        opacity: 0;
+        color: #ffffff;
+      }
+
+      body.dark-mode #theme-toggle {
+        background-color: #3c3c3c;
+      }
+
+      body.dark-mode #slider {
+        background-color: #ffffff;
+        transform: translateX(28px);
+      }
+
+      body.dark-mode #sun-icon {
+        opacity: 0;
+      }
+
+      body.dark-mode #moon-icon {
+        opacity: 1;
+      }
+
+      .sidebar {
+        width: 300px;
+        background-color: #1f2327;
+        color: white;
+        height: 100vh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        padding-top: 20px;
+        transition: all 0.3s ease;
+      }
+
+      .sidebar a {
+        color: white;
+        text-decoration: none;
+        margin: 8px 20px;
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(
+          135deg,
+          rgba(201, 37, 37, 0.1) 0%,
+          rgba(201, 37, 37, 0.05) 100%
+        );
+        border: 1px solid rgba(201, 37, 37, 0.1);
+        font-weight: 700;
+      }
+
+      .sidebar a i {
+        margin-right: 15px;
+        font-size: 20px;
+        transition: all 0.3s ease;
+      }
+
+      .video-canvas-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 40px;
+        width: 100%;
+        max-width: 1600px;
+        margin-bottom: 20px;
+        align-self: center;
+      }
+
+      .video-canvas-container video,
+      .canvas-container canvas {
+        flex: 1;
+        width: 700px;
+        height: 500px;
+      }
+
+      .video-container {
+        position: relative;
+        width: 700px;
+        height: 500px;
+      }
+
+      .canvas-container {
+        position: relative;
+        width: 700px;
+        height: 500px;
+      }
+      #startDetection {
+        position: absolute;
+        transform: translateX(-50%);
+        z-index: 10;
+        
+        font-size: 20px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        transition: all 0.3s ease;
+        width: 150px;
+        height: 150px;
+        padding: 20px;
+        border-radius: 50%; /* Changed to 50% for perfect circle */
+        overflow: hidden;
+        position: relative;
+      }
+
+      #startDetection:hover {
+        transform: translateX(-50%) scale(1.05);
+        box-shadow: 
+          0 0 20px rgba(201, 37, 37, 0.5),
+          0 0 40px rgba(201, 37, 37, 0.3),
+          0 0 60px rgba(201, 37, 37, 0.1);
+        animation: pulse-glow 1.5s infinite;
+      }
+
+      #startDetection::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          45deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+        transform: translateX(-100%);
+        transition: none;
+      }
+
+      #startDetection:hover::after {
+        animation: shine 1s infinite;
+      }
+
+      @keyframes pulse-glow {
+        0% {
+          box-shadow: 0 0 20px rgba(201, 37, 37, 0.5);
+        }
+        50% {
+          box-shadow: 
+            0 0 30px rgba(201, 37, 37, 0.8),
+            0 0 50px rgba(201, 37, 37, 0.4),
+            0 0 70px rgba(201, 37, 37, 0.2);
+        }
+        100% {
+          box-shadow: 0 0 20px rgba(201, 37, 37, 0.5);
+        }
+      }
+
+      @keyframes shine {
+        0% {
+          transform: translateX(-100%) rotate(45deg);
+        }
+        100% {
+          transform: translateX(100%) rotate(45deg);
+        }
+      }
+
+      .preview-label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        border-radius: 15px;
+        transform: translate(-50%, -50%);
+        color: rgba(128, 128, 128, 0.9);
+        padding: 25px;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        backdrop-filter: blur(5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        z-index: 100;
+      }
+
+      .preview-label i {
+        font-size: 20px;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      /* Hover effect */
+      .sidebar a:hover {
+        transform: translateX(15px) scale(1.03);
+        background: linear-gradient(
+          135deg,
+          rgba(201, 37, 37, 0.2) 0%,
+          rgba(201, 37, 37, 0.15) 100%
+        );
+        box-shadow: 0 4px 15px rgba(201, 37, 37, 0.2);
+        border: 1px solid rgba(201, 37, 37, 0.2);
+        z-index: 2;
+      }
+
+      .sidebar a:hover i {
+        transform: translateX(3px);
+        color: #ff4d4d;
+      }
+
+      /* Active state */
+      .sidebar a.active {
+        background: linear-gradient(
+          135deg,
+          rgba(201, 37, 37, 0.3) 0%,
+          rgba(201, 37, 37, 0.2) 100%
+        );
+        border: 1px solid rgba(201, 37, 37, 0.3);
+        box-shadow: 0 4px 15px rgba(201, 37, 37, 0.15);
+        transform: translateX(10px);
+        z-index: 3;
+      }
+
+      /* Dark mode adjustments */
+      body.dark-mode .sidebar {
+        background-color: #1a1a1a;
+      }
+
+      body.dark-mode .sidebar a {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.1) 0%,
+          rgba(255, 255, 255, 0.05) 100%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      body.dark-mode .sidebar a:hover {
+        background: linear-gradient(
+          135deg,
+          rgba(201, 37, 37, 0.25) 0%,
+          rgba(201, 37, 37, 0.15) 100%
+        );
+        border: 1px solid rgba(201, 37, 37, 0.2);
+      }
+
+      /* Add subtle animation for links */
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      @keyframes shine {
+        from {
+          transform: translateX(-100%) rotate(45deg);
+        }
+        to {
+          transform: translateX(100%) rotate(45deg);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 200px;
+        }
+
+        .main {
+          margin-left: 200px;
+          width: calc(100% - 200px);
+        }
+
+        .background-panel {
+          padding: 20px;
+        }
+
+        .buttons {
+          gap: 15px;
+          height: auto;
+        }
+
+        .buttons button {
+          grid-column: 1 !important;
+          grid-row: auto !important;
+          padding: 20px 30px;
+          font-size: 20px;
+        }
+
+        .buttons button.upload-single-btn {
+          font-size: 36px;
+          padding: 30px 40px;
+        }
+
+        .results-container {
+          width: 300px;
+          right: 20px;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .sidebar {
+          width: 100px;
+        }
+
+        .main {
+          margin-left: 100px;
+          width: calc(100% - 100px);
+        }
+
+        .sidebar a {
+          font-size: 14px;
+          padding: 10px;
+        }
+
+        button {
+          font-size: 18px;
+          padding: 15px 25px;
+        }
+
+        .modal-content {
+          width: 90%;
+          padding: 12px;
+        }
+
+        .preview-image,
+        #frameVideo,
+        #captureVideo {
+          max-width: 200px;
+        }
+
+        .buttons button.upload-single-btn {
+          font-size: 32px;
+          padding: 25px 35px;
+        }
+      }
+
+      .sidebar a {
+        animation: slideIn 0.3s ease forwards;
+        animation-delay: calc(var(--item-index) * 0.1s);
+      }
+
+      /* Optional: Add a subtle glow effect on hover */
+      .sidebar a:hover::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 12px;
+        background: radial-gradient(
+          circle at center,
+          rgba(201, 37, 37, 0.1) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+
+      h1 {
+        color: #ff0000; 
+        font-size: 2.5em; 
+        margin-bottom: 1.5em; 
+      }
+      .instructions {
+        text-align: left;
+        padding: 20px;
+        margin-top: -80px;
+        background: white;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+        margin-left: 16%;
+        width: 30%;
+        display: inline-block;
+        position: relative;
+      }
+
+      .instructions:hover {
+        transform: translateY(-5px);
+      }
+
+      body.dark-mode .instructions {
+        background: #3c3c3c; /* Darker background for dark mode */
+        color: #f4f4f4; /* Light text for contrast */ /* Dark red box-shadow */
+      }
+
+      .instructions ul li {
+        margin-bottom: 10px;
+        line-height: 1.6;
+      }
+
+      .instructions ul li::marker {
+        color: #c92525;
+      }
+
+    </style>
+  </head>
+  <body>
+    <!-- Dark Mode Toggle -->
+    <div id="theme-toggle">
+      <div id="slider"></div>
+      <i id="moon-icon" class="fa-solid fa-sun toggle-icon"></i>
+      <i id="sun-icon" class="fa-solid fa-moon toggle-icon"></i>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <a href="page2">Dashboard</a>
+      <a href="page2" class="active">Scan Now</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+      <h1 style="color: #c92525; font-size: 2.5em; margin-bottom: 2.5em; text-align: center; width: 100%; margin-left: auto; margin-right: auto;">Real-Time Freshness Detection</h1>
+      <div class="instructions">
+        <button id="startDetection" style="position: absolute; left: -110px; top: -10px; margin-top: 10px; box-shadow: 0 4px 10px rgba(201, 37, 37, 0.3); background: rgb(201, 37, 37);"><i class="fas fa-fish"></i> Start Detection</button>
+        <ul style="color: #c92525;">
+          <li>
+            <strong>Prepare and position</strong> the fish in front of your camera.
+          </li>
+          <li>
+            <strong>Enable the camera</strong> and click "Start Detection."
+          </li>
+          <li>
+            <strong>Wait</strong> for the freshness results to appear.
+          </li>
+        </ul>
+      </div>
+      <div class="camera-select" style="display: none; position: absolute; left: 50%; transform: translateX(-50%); top: 20px; z-index: 1000;">
+        <select id="cameraSelect" style="padding: 8px 12px; border-radius: 8px; border: 2px solid #c92525; background: white; color: #333;">
+          <option value="">Select Camera</option>
+        </select>
+      </div>
+      <div class="results-container">
+        <h2>Freshness Results</h2>
+        <div id="results">Freshness results will appear here...</div>
+      </div>
+      <div class="video-canvas-container">
+        <div class="video-container">
+          <div class="preview-label" style="flex-direction: column; align-items: center; text-align: center;">
+            <i class="fas fa-video" style="font-size: 55px; margin-bottom: 8px;"></i>
+            This is your video preview
+          </div>
+          <video id="video" autoplay muted></video>
+        </div>
+        
+        <div class="canvas-container">
+          <div class="preview-label" style="flex-direction: column; align-items: center; text-align: center;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 55px; margin-bottom: 8px;"></i>
+            This is your scanned-fish preview
+          </div>
+          <canvas id="canvas"></canvas>
+        </div>
+      </div>
+    </div>
+    
+
+    <script>
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const resultsDiv = document.getElementById("results");
+      const startDetectionBtn = document.getElementById("startDetection");
+      const themeToggle = document.getElementById("theme-toggle");
+      const slider = document.getElementById("slider");
+      const previewLabels = document.querySelectorAll('.preview-label');
+      const cameraSelect = document.getElementById("cameraSelect");
+      const cameraSelectContainer = document.querySelector(".camera-select");
+
+      let currentStream = null;
+      let detectionInterval = null;
+
+      // Check the saved theme preference
+      document.addEventListener("DOMContentLoaded", () => {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+          document.body.classList.add("dark-mode");
+        }
+      });
+
+      // Toggle dark mode and save preference
+      themeToggle.addEventListener("click", () => {
+        document.body.classList.toggle("dark-mode");
+        const isDarkMode = document.body.classList.contains("dark-mode");
+        localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+      });
+
+      async function startWebcam() {
+        try {
+          // First get the list of available cameras
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          
+          // Clear and populate the select element
+          cameraSelect.innerHTML = '<option value="">Select Camera</option>';
+          videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `Camera ${index + 1}`;
+            cameraSelect.appendChild(option);
+          });
+          
+          // Show the camera select dropdown
+          cameraSelectContainer.style.display = 'block';
+          
+          // If there's only one camera, select it automatically
+          if (videoDevices.length === 1) {
+            cameraSelect.value = videoDevices[0].deviceId;
+            await startStream(videoDevices[0].deviceId);
+          }
+        } catch (error) {
+          alert("Unable to access the webcam.");
+        }
+      }
+
+      async function startStream(deviceId) {
+        try {
+          const constraints = {
+            video: deviceId ? { deviceId: { exact: deviceId } } : true
+          };
+          
+          if (currentStream) {
+            stopWebcam();
+          }
+          
+          currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+          video.srcObject = currentStream;
+          
+          // Hide preview labels when starting detection
+          previewLabels.forEach(label => {
+            label.style.display = 'none';
+          });
+        } catch (error) {
+          alert("Error accessing the selected camera.");
+        }
+      }
+
+      function stopWebcam() {
+        if (currentStream) {
+          const tracks = currentStream.getTracks();
+          tracks.forEach((track) => track.stop());
+          // Show preview labels when stopping detection
+          previewLabels.forEach(label => {
+            label.style.display = 'block';
+          });
+          // Hide camera select
+          cameraSelectContainer.style.display = 'none';
+        }
+      }
+
+      cameraSelect.addEventListener('change', async (event) => {
+        if (event.target.value) {
+          await startStream(event.target.value);
+        }
+      });
+
+      async function analyzeFrame() {
+        const context = canvas.getContext("2d");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(async (blob) => {
+          const formData = new FormData();
+          formData.append("file", blob, "frame.jpg");
+
+          const response = await fetch("/upload-single-image", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await response.json();
+          displayBoundingBoxes(data);
+        });
+      }
+
+      function displayBoundingBoxes(data) {
+        const context = canvas.getContext("2d");
+        resultsDiv.textContent = "";
+
+        data.predictions.forEach((pred) => {
+          const { x, y, width, height, class: className, confidence } = pred;
+
+          const adjX = x - width / 2;
+          const adjY = y - height / 2;
+
+          context.strokeStyle = "red";
+          context.lineWidth = 2;
+          context.strokeRect(adjX, adjY, width, height);
+
+          context.fillStyle = "red";
+          context.fillText(
+            `${className} (${(confidence * 100).toFixed(1)}%)`,
+            adjX,
+            adjY - 5
+          );
+
+          const result = document.createElement("div");
+          result.textContent = `${className} (${(confidence * 100).toFixed(
+            1
+          )}%)`;
+          resultsDiv.appendChild(result);
+        });
+      }
+
+      startDetectionBtn.addEventListener("click", () => {
+        if (detectionInterval) {
+          clearInterval(detectionInterval);
+          stopWebcam();
+          startDetectionBtn.textContent = "Start Detection";
+          startDetectionBtn.innerHTML = '<i class="fas fa-fish"></i> Start Detection';
+        } else {
+          startWebcam();
+          detectionInterval = setInterval(analyzeFrame, 1000);
+          startDetectionBtn.innerHTML = '<i class="fas fa-stop"></i> Stop Detection';
+        }
+      });
+    </script>
+  </body>
+</html>
