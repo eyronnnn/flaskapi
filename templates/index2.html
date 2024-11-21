@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AquaGrade Scanning</title>
+    <title>Fish Freshness Identifier</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +19,7 @@
             transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        body.dark-mode {
+        body.dark-mode {    
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             color: #f4f4f4;
         }
@@ -1650,6 +1650,63 @@
             left: 0;
             white-space: nowrap;
         }
+
+        /* Sparkle effect styles */
+        .sparkle-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .sparkle {
+            position: fixed;
+            background: rgba(201, 37, 37, 0.4);
+            pointer-events: none;
+            mix-blend-mode: screen;
+            z-index: 0;
+            animation: sparkleFloat 6s infinite ease-out;
+            opacity: 0;
+        }
+
+        .sparkle.diamond {
+            clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        }
+
+        .sparkle.star {
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+
+        .sparkle.circle {
+            border-radius: 50%;
+        }
+
+        body.dark-mode .sparkle {
+            background: rgba(255, 255, 255, 0.3);
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+        }
+
+        @keyframes sparkleFloat {
+            0% {
+                transform: translate(var(--start-x), 100vh) rotate(0deg) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            50% {
+                transform: translate(var(--end-x), var(--end-y)) rotate(180deg) scale(1);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(var(--final-x), -100px) rotate(360deg) scale(0);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1757,20 +1814,20 @@
                 <div class="modal-left">
                     <div class="section-title">Upload Controls</div>
                     <form id="singleImageForm" class="upload-form" enctype="multipart/form-data">
-                        <div class="input-group">
+                        <div class="input-group" style="margin-bottom: 10px;">
                             <label class="input-label">Select Image File</label>
                             <input type="file" name="file" required accept="image/*" onchange="previewImage(this, 'singlePreview')">
                             <span class="input-hint">Supported formats: JPG, PNG, JPEG</span>
                         </div>
                         
-                        <div class="input-group">
+                        <div class="input-group" style="margin-bottom: 10px;">
                             <label class="input-label">Image Preview</label>
-                            <div class="preview-container" id="singlePreview-container">
+                            <div class="preview-container" id="singlePreview-container" style="max-height: 150px;">
                                 <img id="singlePreview" class="preview-image" alt="Preview">
                             </div>
                         </div>
                         
-                        <div class="input-group">
+                        <div class="input-group" style="margin-bottom: 10px;">
                             <label class="input-label">Upload Progress</label>
                             <div class="progress-container" id="singleProgress">
                                 <div class="progress-bar">
@@ -1935,9 +1992,21 @@
 
         async function startCaptureCamera() {
             try {
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: 'environment' }, // Prefer back camera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+
+                // First try to get available devices
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
                 captureImageCameraOptions.innerHTML = '';
+                
+                // Add options for available cameras
                 videoDevices.forEach((device, index) => {
                     const option = document.createElement('option');
                     option.value = device.deviceId;
@@ -1945,15 +2014,18 @@
                     captureImageCameraOptions.appendChild(option);
                 });
 
+                // If a specific camera is selected, use it
                 const selectedDeviceId = captureImageCameraOptions.value;
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: selectedDeviceId } },
-                    audio: false
-                });
+                if (selectedDeviceId) {
+                    constraints.video.deviceId = { exact: selectedDeviceId };
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 captureVideo.srcObject = stream;
                 document.getElementById('captureBtn').disabled = false;
             } catch (error) {
-                alert('Error accessing camera: ' + error);
+                console.error('Camera error:', error);
+                alert('Error accessing camera. Please ensure camera permissions are granted and try again.');
             }
         }
 
@@ -2183,7 +2255,6 @@
                         progressContainer.style.display = 'none';
                     }, 300);
                 }, 1000);
-            });
 
             xhr.addEventListener('error', function() {
                 document.getElementById('batchImagesResult').textContent = 'Error: Upload failed';
@@ -2199,9 +2270,19 @@
 
         async function startFrameByFrame() {
             try {
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: 'environment' }, // Prefer back camera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                };
+
                 const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
                 frameCameraOptions.innerHTML = '';
+                
                 videoDevices.forEach((device, index) => {
                     const option = document.createElement('option');
                     option.value = device.deviceId;
@@ -2210,18 +2291,19 @@
                 });
 
                 const selectedDeviceId = frameCameraOptions.value;
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { deviceId: { exact: selectedDeviceId } },
-                    audio: false
-                });
+                if (selectedDeviceId) {
+                    constraints.video.deviceId = { exact: selectedDeviceId };
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
                 frameVideo.srcObject = stream;
 
-                // Start capturing frames every 500ms (2 frames per second)
                 frameDetectionInterval = setInterval(() => {
                     captureFrame();
                 }, 500);
             } catch (error) {
-                alert('Error accessing camera: ' + error);
+                console.error('Camera error:', error);
+                alert('Error accessing camera. Please ensure camera permissions are granted and try again.');
             }
         }
 
@@ -2365,6 +2447,58 @@
                 container.appendChild(box);
             });
         }
+
+        // Enhanced sparkle effect
+        function createSparkle() {
+            const container = document.querySelector('.sparkle-container');
+            const sparkle = document.createElement('div');
+            const size = Math.random() * 15 + 5;
+            
+            // Random shape selection
+            const shapes = ['diamond', 'star', 'circle'];
+            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            
+            // Random starting position
+            const startX = Math.random() * window.innerWidth;
+            const endX = startX + (Math.random() - 0.5) * 200;
+            const endY = Math.random() * window.innerHeight * 0.6;
+            const finalX = endX + (Math.random() - 0.5) * 200;
+            
+            sparkle.className = `sparkle ${shape}`;
+            sparkle.style.width = `${size}px`;
+            sparkle.style.height = `${size}px`;
+            sparkle.style.setProperty('--start-x', `${startX}px`);
+            sparkle.style.setProperty('--end-x', `${endX}px`);
+            sparkle.style.setProperty('--end-y', `${endY}px`);
+            sparkle.style.setProperty('--final-x', `${finalX}px`);
+            
+            // Add subtle glow effect
+            sparkle.style.filter = `blur(${Math.random() * 0.5}px) brightness(${1 + Math.random()})`;
+            
+            container.appendChild(sparkle);
+            
+            // Remove sparkle after animation
+            setTimeout(() => {
+                sparkle.remove();
+            }, 6000);
+        }
+
+        // Create sparkles periodically
+        setInterval(createSparkle, 200);
+        
+        // Create initial set of sparkles
+        for(let i = 0; i < 20; i++) {
+            setTimeout(createSparkle, i * 200);
+        }
+
+        // Optional: Pause sparkles when tab is not visible to save resources
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(sparkleInterval);
+            } else {
+                sparkleInterval = setInterval(createSparkle, 200);
+            }
+        });
     </script>
 
     <script>
@@ -2457,6 +2591,8 @@
             sidebarLinks[0].classList.add('active');
         });
     </script>
+
+    <div class="sparkle-container"></div>
 
 </body>
 </html>
