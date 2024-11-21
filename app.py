@@ -19,13 +19,21 @@ if not os.path.exists(UPLOAD_FOLDER):
 def home():
     return render_template('index.html')
 
-@app.route('/page2')
-def page2():
-    return render_template('index2.html')
-
 @app.route('/realtime-detection')
 def realtime_detection():
     return render_template('TEST.html')
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/scan')
+def scan():
+    return render_template('scan.html')
+
+@app.route('/page2')
+def page2():
+    return render_template('index2.html')
 
 @app.route('/upload-single-image', methods=['POST'])
 def upload_single_image():
