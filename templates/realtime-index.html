@@ -12,6 +12,43 @@
       border: 3px solid transparent;
       transition: border-color 0.3s ease;
     }
+    .camera-select-btn {
+      background-color: #4a90e2;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 10px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #cameraSelect {
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 200px;
+      background-color: white;
+      color: black;
+      font-size: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 30px;
+      background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 12px;
+    }
+
+    .start-detection-btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -42,11 +79,21 @@
       <div class="instructions">
         <ul>
           <li><strong>Prepare</strong> the fish and position it in front of your camera.</li>
+          <li><strong>Select</strong> your preferred camera device.</li>
           <li><strong>Enable</strong> the camera and click "Start Detection."</li>
           <li><strong>Review</strong> the results of the freshness detection.</li>
         </ul>
       </div>
-      <button class="start-detection-btn" id="startDetectionButton">
+      
+      <!-- Add camera selection button and dropdown -->
+      <button class="camera-select-btn" id="cameraSelectButton">
+        <i class="fa-solid fa-camera"></i> Select Camera
+      </button>
+      <select id="cameraSelect">
+        <option value="">Choose a camera...</option>
+      </select>
+      
+      <button class="start-detection-btn" id="startDetectionButton" disabled>
         <i class="fa-solid fa-fish"></i> Start Realtime Detection
       </button>
       <div class="video-preview-container">
@@ -74,6 +121,7 @@
     let streaming = false;
     let currentStream = null;
     let apiKey = "SUxPc1PBNC08yu5jmTnN"; // Default API key
+    let selectedDeviceId = null;
 
     function toggleTheme() {
       document.body.classList.toggle("dark-mode");
@@ -83,6 +131,52 @@
       const dropdown = document.getElementById("dropdownMenu");
       dropdown.style.display = dropdown.style.display === "flex" ? "none" : "flex";
     }
+
+    // Add new function to handle camera enumeration and selection
+    async function initializeCameraSelection() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        const cameraSelect = document.getElementById('cameraSelect');
+        
+        videoDevices.forEach(device => {
+          const option = document.createElement('option');
+          option.value = device.deviceId;
+          option.text = device.label || `Camera ${cameraSelect.length + 1}`;
+          cameraSelect.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error enumerating devices:', error);
+        alert('Unable to access camera devices.');
+      }
+    }
+
+    // Add camera selection button handler
+    document.getElementById('cameraSelectButton').addEventListener('click', async () => {
+      // Request initial permission
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream.getTracks().forEach(track => track.stop()); // Stop the test stream
+        
+        // Show camera selection dropdown
+        const cameraSelect = document.getElementById('cameraSelect');
+        cameraSelect.style.display = 'block';
+        
+        // Initialize camera list
+        await initializeCameraSelection();
+        
+      } catch (error) {
+        console.error('Permission denied or error:', error);
+        alert('Camera permission is required to use this feature.');
+      }
+    });
+
+    // Add camera selection change handler
+    document.getElementById('cameraSelect').addEventListener('change', (event) => {
+      selectedDeviceId = event.target.value;
+      const startButton = document.getElementById('startDetectionButton');
+      startButton.disabled = !selectedDeviceId;
+    });
 
     // Handle Start/Stop detection
     document.getElementById("startDetectionButton").addEventListener("click", async () => {
@@ -94,6 +188,7 @@
         try {
           currentStream = await navigator.mediaDevices.getUserMedia({ 
             video: {
+              deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
               width: { ideal: 320 },
               height: { ideal: 240 }
             }
@@ -105,7 +200,7 @@
           startBubbles(); // Start bubble effect
         } catch (error) {
           console.error("Error starting video stream:", error);
-          alert("Unable to access the camera. Please allow permissions.");
+          alert("Unable to access the selected camera. Please try again.");
         }
       } else {
         const tracks = currentStream.getTracks();
