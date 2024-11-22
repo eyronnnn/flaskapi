@@ -7,6 +7,12 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='styling-realtime/realtime-styles.css') }}">
+  <style>
+    #analysisCanvas {
+      border: 3px solid transparent;
+      transition: border-color 0.3s ease;
+    }
+  </style>
 </head>
 <body>
   <!-- Theme Toggle -->
@@ -154,9 +160,23 @@
 
           // Draw bounding boxes
           if (data && data.predictions && data.predictions.length > 0) {
+            const bestPrediction = data.predictions.sort((a, b) => b.confidence - a.confidence)[0];
             drawBoundingBoxes(ctx, data.predictions);
 
-            const bestPrediction = data.predictions.sort((a, b) => b.confidence - a.confidence)[0];
+            // Check if confidence is above 40%
+            if (bestPrediction.confidence > 0.40) {
+              // Add green border to canvas
+              canvas.style.border = '3px solid #00ff00';
+              // Stop the analysis loop
+              streaming = false;
+              // Stop the video stream but keep the last frame
+              const tracks = currentStream.getTracks();
+              tracks.forEach((track) => track.stop());
+              // Update button text
+              document.getElementById("startDetectionButton").textContent = "Start Realtime Detection";
+              return;
+            }
+
             const formattedResult = {
               "Fish Quality": bestPrediction.class,
               Confidence: (bestPrediction.confidence * 100).toFixed(1) + '%',
