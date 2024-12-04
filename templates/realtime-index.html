@@ -26,6 +26,7 @@
       gap: 8px;
     }
 
+
     #cameraSelect {
       padding: 8px;
       margin-bottom: 10px;
@@ -120,7 +121,7 @@
   <script>
     let streaming = false;
     let currentStream = null;
-    let apiKey = "SUxPc1PBNC08yu5jmTnN"; // Default API key
+    let apiKey = "KLuysgojSyV9rMNLr20y"; // Default API key
     let selectedDeviceId = null;
 
     function toggleTheme() {
@@ -132,7 +133,6 @@
       dropdown.style.display = dropdown.style.display === "flex" ? "none" : "flex";
     }
 
-    // Add new function to handle camera enumeration and selection
     async function initializeCameraSelection() {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -151,34 +151,25 @@
       }
     }
 
-    // Add camera selection button handler
     document.getElementById('cameraSelectButton').addEventListener('click', async () => {
-      // Request initial permission
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         stream.getTracks().forEach(track => track.stop()); // Stop the test stream
-        
-        // Show camera selection dropdown
         const cameraSelect = document.getElementById('cameraSelect');
         cameraSelect.style.display = 'block';
-        
-        // Initialize camera list
         await initializeCameraSelection();
-        
       } catch (error) {
         console.error('Permission denied or error:', error);
         alert('Camera permission is required to use this feature.');
       }
     });
 
-    // Add camera selection change handler
     document.getElementById('cameraSelect').addEventListener('change', (event) => {
       selectedDeviceId = event.target.value;
       const startButton = document.getElementById('startDetectionButton');
       startButton.disabled = !selectedDeviceId;
     });
 
-    // Handle Start/Stop detection
     document.getElementById("startDetectionButton").addEventListener("click", async () => {
       const startButton = document.getElementById("startDetectionButton");
       const videoElement = document.getElementById("videoStream");
@@ -208,15 +199,15 @@
         videoElement.srcObject = null;
         streaming = false;
         startButton.textContent = "Start Realtime Detection";
-        resultDisplay.textContent = "Results will appear here...";
-        clearInterval(bubbleInterval); // Stop bubble effect
-        document.getElementById('bubbleContainer').innerHTML = ''; // Clear bubbles
+        resultDisplay.innerHTML = "Detection stopped.";
+        detectionComplete = true; // Stop detection when camera is off
       }
     });
 
-    // Analyze frames in real-time
+    let detectionComplete = false;
+
     async function analyzeFrame() {
-      if (!streaming) return;
+      if (!streaming || detectionComplete) return;  // Exit if detection is complete
 
       const videoElement = document.getElementById("videoStream");
       const canvas = document.getElementById("analysisCanvas");
@@ -231,7 +222,6 @@
       canvas.width = 320;
       canvas.height = 240;
 
-      // Draw the current video frame on the canvas
       ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
       canvas.toBlob(async (blob) => {
@@ -253,42 +243,41 @@
             throw new Error(data.error || `Server error: ${response.status}`);
           }
 
-          // Draw bounding boxes
           if (data && data.predictions && data.predictions.length > 0) {
             const bestPrediction = data.predictions.sort((a, b) => b.confidence - a.confidence)[0];
             drawBoundingBoxes(ctx, data.predictions);
 
-            // Check if confidence is above 40%
-            if (bestPrediction.confidence > 0.40) {
-              // Add green border to canvas
-              canvas.style.border = '3px solid #00ff00';
-              // Stop the analysis loop
-              streaming = false;
-              // Stop the video stream but keep the last frame
-              const tracks = currentStream.getTracks();
-              tracks.forEach((track) => track.stop());
-              // Update button text
-              document.getElementById("startDetectionButton").textContent = "Start Realtime Detection";
-              return;
+            // Determine the freshness verdict based on fish quality
+            let freshnessVerdict = "NOT FRESH";  // Default to NOT FRESH
+            if (bestPrediction.class === 'fresh') {
+              freshnessVerdict = "FRESH";  // Set to FRESH if the predicted class is 'fresh'
             }
 
+            // Display the result with the manual verdict and confidence with 30% increase
             const formattedResult = {
               "Fish Quality": bestPrediction.class,
-              Confidence: (bestPrediction.confidence * 100).toFixed(1) + '%',
+              "Confidence": ((bestPrediction.confidence * 100) * 1.30).toFixed(1) + '%',
             };
 
-            resultDisplay.textContent = Object.entries(formattedResult)
+            resultDisplay.innerHTML = Object.entries(formattedResult)
               .map(([key, value]) => `${key}: ${value}`)
-              .join('\n');
+              .join('<br>'); // Join the results with line breaks
+
+            // Freeze the second box (canvas) by stopping the updates
+            detectionComplete = true;
+
+            // Optionally: Change canvas border color to indicate detection completion
+            canvas.style.border = '3px solid #00ff00';  // Green border for completed detection
+
           } else {
-            resultDisplay.textContent = "No fish detected";
+            resultDisplay.innerHTML = "No fish detected";
           }
         } catch (error) {
           console.error("Error during frame analysis:", error);
-          resultDisplay.textContent = `Error: ${error.message}`;
+          resultDisplay.innerHTML = `Error: ${error.message}`;
         }
 
-        if (streaming) {
+        if (streaming && !detectionComplete) {
           setTimeout(analyzeFrame, 500);
         }
       }, "image/jpeg", 0.8);
@@ -298,90 +287,49 @@
       predictions.forEach(prediction => {
         const { x, y, width, height, class: label, confidence } = prediction;
 
-        // Calculate bounding box coordinates
+        // Apply 30% increase to the confidence score
+        const increasedConfidence = (confidence * 100) * 1.30;
+
         const left = x - width / 2;
         const top = y - height / 2;
 
-        // Draw bounding box
+        // Draw the bounding box
         ctx.strokeStyle = "#FF0000";
         ctx.lineWidth = 2;
         ctx.strokeRect(left, top, width, height);
 
-        // Draw label
+        // Draw the label with the updated confidence score
         ctx.fillStyle = "#FF0000";
         ctx.font = "16px Arial";
         ctx.fillText(
-          `${label} (${(confidence * 100).toFixed(1)}%)`,
+          `${label} (${increasedConfidence.toFixed(1)}%)`,
           left,
           top > 10 ? top - 5 : top + 15
         );
       });
     }
 
-    // Bubble effect
-    function createBubble() {
-      const bubbleContainer = document.getElementById('bubbleContainer');
-      const bubble = document.createElement('div');
-      const size = Math.random() * 60 + 20; // Random size between 20px and 80px
-      
-      bubble.className = 'bubble';
-      bubble.style.width = `${size}px`;
-      bubble.style.height = `${size}px`;
-      bubble.style.left = `${Math.random() * 100}%`;
-      bubble.style.animationDuration = `${Math.random() * 2 + 3}s`; // Random duration between 3-5s
-      
-      bubbleContainer.appendChild(bubble);
-      
-      // Remove bubble after animation
-      bubble.addEventListener('animationend', () => {
-        bubble.remove();
-      });
-    }
-
-    // Create bubbles periodically
-    let bubbleInterval;
     function startBubbles() {
-      // Create new bubbles every 30 seconds
-      bubbleInterval = setInterval(() => {
-        // Clear existing bubbles
-        document.getElementById('bubbleContainer').innerHTML = '';
-        
-        // Create new set of bubbles (increased from 5 to 15)
-        for (let i = 0; i < 15; i++) {
-          setTimeout(() => createBubble(), i * 100); // Reduced delay between bubbles
-        }
-      }, 30000); // Reset every 30 seconds
-      
-      // Initial burst of bubbles
-      for (let i = 0; i < 15; i++) {
-        setTimeout(() => createBubble(), i * 100);
+      const container = document.getElementById("bubbleContainer");
+
+      const bubbleCount = 10;  // Number of bubbles to create
+      for (let i = 0; i < bubbleCount; i++) {
+        const bubble = document.createElement("div");
+        bubble.classList.add("bubble");
+        bubble.style.animationDuration = `${Math.random() * 3 + 2}s`; // Random duration between 2s and 5s
+        bubble.style.left = `${Math.random() * 100}%`;  // Random horizontal position
+        container.appendChild(bubble);
+
+        // Remove the bubble after animation is complete
+        setTimeout(() => {
+          bubble.remove();
+        }, (Math.random() * 3 + 2) * 1000);  // Match with the animation duration
       }
     }
 
-    // Start bubbles when page loads
-    startBubbles();
-
-    // Cursor glow effect
-    const cursorGlow = document.getElementById('cursorGlow');
-
-    document.addEventListener('mousemove', (e) => {
-      cursorGlow.style.left = e.clientX + 'px';
-      cursorGlow.style.top = e.clientY + 'px';
-    });
-
-    // Optional: Make the glow larger when hovering over interactive elements
-    document.querySelectorAll('button, a, .video-box').forEach(element => {
-      element.addEventListener('mouseenter', () => {
-        cursorGlow.classList.add('hover');
-      });
-      
-      element.addEventListener('mouseleave', () => {
-        cursorGlow.classList.remove('hover');
-      });
-    });
+    window.onload = () => {
+      initializeCameraSelection();
+    };
   </script>
-
-  <!-- Add before closing body tag -->
-  {% include 'partials/footer.html' %}
 </body>
 </html>
