@@ -7,7 +7,7 @@ app = Flask(__name__)
 # Initialize Roboflow Inference Client using new API key
 CLIENT = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
-    api_key="KLuysgojSyV9rMNLr20y"  # Updated API key
+    api_key="INUpfYGdAW2H1knkcdCI"  # Updated API key
 )
 
 # Ensure the 'uploads' directory exists
@@ -41,7 +41,7 @@ def upload_single_image():
     file = request.files['file']
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
-    result = CLIENT.infer(file_path, model_id="fish-freshness-6-sb0n6/3")
+    result = CLIENT.infer(file_path, model_id="fish-freshness-6-sb0n6-wcpby/1")
     return jsonify(result)
 
 @app.route('/upload-batch-images', methods=['POST'])
@@ -52,7 +52,7 @@ def upload_batch_images():
     for file in files:
         file_path = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(file_path)
-        result = CLIENT.infer(file_path, model_id="fish-freshness-6-sb0n6/3")
+        result = CLIENT.infer(file_path, model_id="fish-freshness-6-sb0n6-wcpby/1")
         results.append({file.filename: result})
 
     return jsonify(results)
