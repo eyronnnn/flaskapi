@@ -26,7 +26,6 @@
       gap: 8px;
     }
 
-
     #cameraSelect {
       padding: 8px;
       margin-bottom: 10px;
@@ -90,13 +89,14 @@
       <button class="camera-select-btn" id="cameraSelectButton">
         <i class="fa-solid fa-camera"></i> Select Camera
       </button>
-      <select id="cameraSelect">
+      <select id="cameraSelect" style="display: none;">
         <option value="">Choose a camera...</option>
       </select>
       
       <button class="start-detection-btn" id="startDetectionButton" disabled>
         <i class="fa-solid fa-fish"></i> Start Realtime Detection
       </button>
+
       <div class="video-preview-container">
         <div class="video-box">
           <video id="videoStream" autoplay playsinline muted style="max-width: 320px; max-height: 240px;"></video>
@@ -105,17 +105,19 @@
           <canvas id="analysisCanvas" style="max-width: 320px; max-height: 240px;"></canvas>
         </div>
       </div>
+
       <div class="results-container">
         <h2>Freshness Results</h2>
         <pre id="videoResultData">Results will appear here...</pre>
       </div>
+
+      <!-- Reset Button -->
+      <button id="resetButton" style="display: none;" onclick="resetCamera()">Reset Camera Selection</button>
     </div>
   </div>
 
-  <!-- Add this right after the <body> tag -->
   <div class="bubble-container" id="bubbleContainer"></div>
 
-  <!-- Add this right after the bubble container -->
   <div class="cursor-glow" id="cursorGlow"></div>
 
   <script>
@@ -123,10 +125,6 @@
     let currentStream = null;
     let apiKey = "INUpfYGdAW2H1knkcdCI"; // Default API key
     let selectedDeviceId = null;
-
-    function toggleTheme() {
-      document.body.classList.toggle("dark-mode");
-    }
 
     function toggleDropdown() {
       const dropdown = document.getElementById("dropdownMenu");
@@ -138,6 +136,9 @@
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter(device => device.kind === 'videoinput');
         const cameraSelect = document.getElementById('cameraSelect');
+        
+        // Clear existing options to prevent duplicates
+        cameraSelect.innerHTML = '<option value="">Choose a camera...</option>';
         
         videoDevices.forEach(device => {
           const option = document.createElement('option');
@@ -154,10 +155,10 @@
     document.getElementById('cameraSelectButton').addEventListener('click', async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop()); // Stop the test stream
+        stream.getTracks().forEach(track => track.stop()); // Stop test stream
         const cameraSelect = document.getElementById('cameraSelect');
         cameraSelect.style.display = 'block';
-        await initializeCameraSelection();
+        await initializeCameraSelection(); // Initialize camera selection once
       } catch (error) {
         console.error('Permission denied or error:', error);
         alert('Camera permission is required to use this feature.');
@@ -169,6 +170,80 @@
       const startButton = document.getElementById('startDetectionButton');
       startButton.disabled = !selectedDeviceId;
     });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const cameraSelectButton = document.getElementById("cameraSelectButton");
+      const cameraSelect = document.getElementById("cameraSelect");
+      const startDetectionButton = document.getElementById("startDetectionButton");
+      const resetButton = document.getElementById("resetButton");
+
+      // Check if a camera is already selected
+      const savedCamera = localStorage.getItem("selectedCamera");
+
+      if (savedCamera) {
+        cameraSelectButton.disabled = true;
+        cameraSelect.disabled = true;
+        startDetectionButton.disabled = false;
+        selectedDeviceId = savedCamera;
+
+        navigator.mediaDevices.enumerateDevices().then(devices => {
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          const selectedDevice = videoDevices.find(device => device.deviceId === savedCamera);
+
+          if (selectedDevice) {
+            alert(`Camera already selected: ${selectedDevice.label || 'Unnamed Camera'}`);
+          } else {
+            alert("Selected camera not found.");
+          }
+        }).catch(error => {
+          console.error('Error enumerating devices:', error);
+          alert('Error retrieving camera details.');
+        });
+
+        resetButton.style.display = 'block';
+      }
+
+      cameraSelectButton.addEventListener('click', async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          stream.getTracks().forEach(track => track.stop());
+          cameraSelect.style.display = 'block';
+          await initializeCameraSelection();
+        } catch (error) {
+          console.error('Permission denied or error:', error);
+          alert('Camera permission is required to use this feature.');
+        }
+      });
+
+      cameraSelect.addEventListener("change", (event) => {
+        selectedDeviceId = event.target.value;
+        if (selectedDeviceId) {
+          localStorage.setItem("selectedCamera", selectedDeviceId);
+          startDetectionButton.disabled = false;
+        } else {
+          localStorage.removeItem("selectedCamera");
+          startDetectionButton.disabled = true;
+        }
+      });
+
+      // Reset camera selection logic
+      resetButton.addEventListener('click', () => {
+        resetCamera();
+      });
+    });
+
+    function resetCamera() {
+      localStorage.removeItem("selectedCamera");
+      document.getElementById('cameraSelectButton').disabled = false;
+      document.getElementById('cameraSelect').disabled = false;
+      document.getElementById('cameraSelect').style.display = 'none';
+      document.getElementById('startDetectionButton').disabled = true;
+      document.getElementById('resetButton').style.display = 'none';
+      alert("Camera selection has been reset. Please select a new camera.");
+
+      // Reinitialize camera selection to prevent duplicates
+      initializeCameraSelection();
+    }
 
     document.getElementById("startDetectionButton").addEventListener("click", async () => {
       const startButton = document.getElementById("startDetectionButton");
@@ -188,7 +263,6 @@
           streaming = true;
           startButton.textContent = "Stop Realtime Detection";
           analyzeFrame();
-          startBubbles(); // Start bubble effect
         } catch (error) {
           console.error("Error starting video stream:", error);
           alert("Unable to access the selected camera. Please try again.");
@@ -200,14 +274,13 @@
         streaming = false;
         startButton.textContent = "Start Realtime Detection";
         resultDisplay.innerHTML = "Detection stopped.";
-        detectionComplete = true; // Stop detection when camera is off
       }
     });
 
     let detectionComplete = false;
 
     async function analyzeFrame() {
-      if (!streaming || detectionComplete) return;  // Exit if detection is complete
+      if (!streaming || detectionComplete) return;
 
       const videoElement = document.getElementById("videoStream");
       const canvas = document.getElementById("analysisCanvas");
@@ -247,13 +320,11 @@
             const bestPrediction = data.predictions.sort((a, b) => b.confidence - a.confidence)[0];
             drawBoundingBoxes(ctx, data.predictions);
 
-            // Determine the freshness verdict based on fish quality
-            let freshnessVerdict = "NOT FRESH";  // Default to NOT FRESH
+            let freshnessVerdict = "NOT FRESH";
             if (bestPrediction.class === 'fresh') {
-              freshnessVerdict = "FRESH";  // Set to FRESH if the predicted class is 'fresh'
+              freshnessVerdict = "FRESH";
             }
 
-            // Display the result with the manual verdict and confidence with 30% increase
             const formattedResult = {
               "Fish Quality": bestPrediction.class,
               "Confidence": ((bestPrediction.confidence * 100) * 1.30).toFixed(1) + '%',
@@ -261,14 +332,10 @@
 
             resultDisplay.innerHTML = Object.entries(formattedResult)
               .map(([key, value]) => `${key}: ${value}`)
-              .join('<br>'); // Join the results with line breaks
+              .join('<br>');
 
-            // Freeze the second box (canvas) by stopping the updates
             detectionComplete = true;
-
-            // Optionally: Change canvas border color to indicate detection completion
-            canvas.style.border = '3px solid #00ff00';  // Green border for completed detection
-
+            canvas.style.border = '3px solid #00ff00';
           } else {
             resultDisplay.innerHTML = "No fish detected";
           }
@@ -286,19 +353,13 @@
     function drawBoundingBoxes(ctx, predictions) {
       predictions.forEach(prediction => {
         const { x, y, width, height, class: label, confidence } = prediction;
-
-        // Apply 30% increase to the confidence score
         const increasedConfidence = (confidence * 100) * 1.30;
-
         const left = x - width / 2;
         const top = y - height / 2;
 
-        // Draw the bounding box
         ctx.strokeStyle = "#FF0000";
         ctx.lineWidth = 2;
         ctx.strokeRect(left, top, width, height);
-
-        // Draw the label with the updated confidence score
         ctx.fillStyle = "#FF0000";
         ctx.font = "16px Arial";
         ctx.fillText(
@@ -307,24 +368,6 @@
           top > 10 ? top - 5 : top + 15
         );
       });
-    }
-
-    function startBubbles() {
-      const container = document.getElementById("bubbleContainer");
-
-      const bubbleCount = 10;  // Number of bubbles to create
-      for (let i = 0; i < bubbleCount; i++) {
-        const bubble = document.createElement("div");
-        bubble.classList.add("bubble");
-        bubble.style.animationDuration = `${Math.random() * 3 + 2}s`; // Random duration between 2s and 5s
-        bubble.style.left = `${Math.random() * 100}%`;  // Random horizontal position
-        container.appendChild(bubble);
-
-        // Remove the bubble after animation is complete
-        setTimeout(() => {
-          bubble.remove();
-        }, (Math.random() * 3 + 2) * 1000);  // Match with the animation duration
-      }
     }
 
     window.onload = () => {
