@@ -10,7 +10,7 @@ CLIENT = InferenceHTTPClient(
     api_key="INUpfYGdAW2H1knkcdCI"  # Updated API key
 )
 
-# Ensure the 'uploads' directory exists
+
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -58,6 +58,6 @@ def upload_batch_images():
     return jsonify(results)
 
 if __name__ == '__main__':
-    # Use the PORT environment variable provided by Render, or default to 5000 for local development
+    
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
