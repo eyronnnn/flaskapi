@@ -199,7 +199,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.8); /* Slight transparency */
+        background: rgba(0, 0, 0, 0.8); 
         justify-content: center;
         align-items: center;
         z-index: 1000;
@@ -207,20 +207,20 @@
       }
 
       .modal-content {
-        background: #1f1f1f; /* Dark background for the modal */
+        background: #1f1f1f;
         border-radius: 10px;
         padding: 20px;
         width: 90%;
         max-width: 800px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         position: relative;
-        color: #e0e0e0; /* Light gray text */
+        color: #e0e0e0;
         font-family: "Poppins", sans-serif;
       }
       .close-btn {
         cursor: pointer;
         font-size: 1.5rem;
-        color: #ff5252; /* Close button color */
+        color: #ff5252; 
         position: absolute;
         top: 10px;
         right: 15px;
@@ -244,9 +244,9 @@
 
       .file-input {
         width: 100%;
-        background-color: #292929; /* Darker input field */
+        background-color: #292929; 
         color: #ffffff;
-        border: 1px solid #424242; /* Subtle border */
+        border: 1px solid #424242; 
         padding: 10px;
         border-radius: 5px;
         font-size: 16px;
@@ -273,7 +273,7 @@
       }
 
       .loading {
-        display: none; /* Initially hidden */
+        display: none; 
         text-align: center;
         font-size: 1.2rem;
         color: #e91e63;
@@ -283,12 +283,12 @@
 
       .spinner {
         margin: 10px auto;
-        border: 4px solid #292929; /* Light border */
-        border-top: 4px solid #e91e63; /* Accent color for animation */
+        border: 4px solid #292929; 
+        border-top: 4px solid #e91e63; 
         border-radius: 50%;
         width: 40px;
         height: 40px;
-        animation: spin 1s linear infinite; /* Rotating spinner */
+        animation: spin 1s linear infinite; 
       }
 
       @keyframes spin {
@@ -351,15 +351,15 @@
         font-family: "Poppins", sans-serif;
       }
 
-      /* Add these new styles */
+      
       .modal-content.batch-mode {
-        max-height: 90vh; /* Limit height to 90% of viewport height */
-        overflow-y: auto; /* Enable vertical scrolling */
+        max-height: 90vh; 
+        overflow-y: auto; 
         display: flex;
         flex-direction: column;
       }
 
-      /* Style the scrollbar for better visibility */
+      
       .modal-content.batch-mode::-webkit-scrollbar {
         width: 8px;
       }
@@ -378,7 +378,7 @@
         background: #888;
       }
 
-      /* Update batch results container style */
+      
       #batchResultsContainer {
         max-height: 100%;
         gap: 1rem;
@@ -399,13 +399,13 @@
         transition: all 0.2s ease;
       }
 
-      /* Single image modal scrollable styles */
+      
       .modal-content {
         max-height: 90vh;
         overflow-y: auto;
       }
 
-      /* Style the scrollbar for the result section */
+      
       #result::-webkit-scrollbar {
         width: 8px;
       }
@@ -424,7 +424,7 @@
         background: #888;
       }
 
-      /* Style for individual prediction items */
+      
       .prediction-item {
         margin-bottom: 1rem;
         padding: 1rem;
@@ -442,7 +442,7 @@
         margin-bottom: 0;
       }
 
-      /* Add these styles to your existing CSS */
+      
       #captureBtn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -461,7 +461,7 @@
       }
 
       #cameraFeed {
-        display: none; /* Initially hidden until camera starts */
+        display: none; 
         background-color: #1a1a1a;
         min-height: 200px;
       }
@@ -504,7 +504,7 @@
         to { transform: rotate(360deg); }
       }
 
-      /* Modal Button Styles */
+      
       .modal button {
         font-family: "Poppins", sans-serif;
         font-size: 0.95rem;
@@ -535,7 +535,7 @@
         box-shadow: none;
       }
 
-      /* Specific button hover effects */
+      
       #captureBtn:hover {
         background-color: #3b82f6;
       }
@@ -548,7 +548,7 @@
         background-color: #22c55e;
       }
 
-      /* Button loading state */
+      
       .modal button.loading {
         position: relative;
         cursor: wait;
@@ -563,12 +563,12 @@
         to { transform: rotate(360deg); }
       }
 
-      /* Button group spacing and alignment */
+      
       .modal .flex.justify-center.gap-4 {
         flex-wrap: wrap;
       }
 
-      /* Responsive adjustments */
+      
       @media (max-width: 640px) {
         .modal button {
           width: 100%;
@@ -920,7 +920,7 @@
       batchFileInput.addEventListener("change", (e) => {
         const files = Array.from(e.target.files);
         if (files.length > 0) {
-          batchPreviewContainer.innerHTML = ""; // Clear existing previews
+          batchPreviewContainer.innerHTML = ""; 
           batchPreviewContainer.classList.remove("hidden");
           analyzeBatchBtn.disabled = false;
 
@@ -1039,7 +1039,7 @@
         }
       });
 
-      // Add these variables with your other modal element variables
+      
       const captureImageBtn = document.querySelector('.card-dark-red:nth-child(3)');
       const captureModal = document.getElementById('captureModal');
       const closeCaptureModal = document.getElementById('closeCaptureModal');
@@ -1443,7 +1443,7 @@
         });
       }
     </script>
-    <!-- Add before closing body tag -->
+    
     {% include 'partials/footer.html' %}
   </body>
 </html>
