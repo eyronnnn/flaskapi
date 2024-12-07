@@ -52,12 +52,7 @@
   </style>
 </head>
 <body>
-  <!-- Theme Toggle -->
-  <!-- <button class="theme-toggle" onclick="toggleTheme()">
-    <div class="toggle-circle"></div>
-  </button> -->
 
-  <!-- Include Sidebar -->
   {% include 'partials/sidebar.html' %}
 
   <!-- Navbar -->
@@ -123,7 +118,7 @@
   <script>
     let streaming = false;
     let currentStream = null;
-    let apiKey = "INUpfYGdAW2H1knkcdCI"; // Default API key
+    let apiKey = "INUpfYGdAW2H1knkcdCI"; 
     let selectedDeviceId = null;
 
     function toggleDropdown() {
@@ -155,10 +150,10 @@
     document.getElementById('cameraSelectButton').addEventListener('click', async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        stream.getTracks().forEach(track => track.stop()); // Stop test stream
+        stream.getTracks().forEach(track => track.stop()); 
         const cameraSelect = document.getElementById('cameraSelect');
         cameraSelect.style.display = 'block';
-        await initializeCameraSelection(); // Initialize camera selection once
+        await initializeCameraSelection(); 
       } catch (error) {
         console.error('Permission denied or error:', error);
         alert('Camera permission is required to use this feature.');
@@ -327,7 +322,7 @@
 
             const formattedResult = {
               "Fish Quality": bestPrediction.class,
-              "Confidence": ((bestPrediction.confidence * 100) * 1.30).toFixed(1) + '%',
+              "Confidence": (bestPrediction.confidence * 100).toFixed(1) + '%',
             };
 
             resultDisplay.innerHTML = Object.entries(formattedResult)
